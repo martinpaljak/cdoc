@@ -3,25 +3,24 @@ sudo: false
 jdk:
 - oraclejdk8
 before_script:
-  - mkdir -p ext
-  - wget http://iweb.dl.sourceforge.net/project/launch4j/launch4j-3/3.8/launch4j-3.8-linux.tgz
-  - echo "e0cb0240c91b3ed6ca7bb85743fd09d6d7651cc3671a5fc17f67e57b8f7a80c6  launch4j-3.8-linux.tgz" | sha256sum -c
-  - tar -C ext -xzf launch4j-3.8-linux.tgz
-  - ant fetch
+- mkdir -p ext
+- wget http://iweb.dl.sourceforge.net/project/launch4j/launch4j-3/3.8/launch4j-3.8-linux.tgz
+- echo "e0cb0240c91b3ed6ca7bb85743fd09d6d7651cc3671a5fc17f67e57b8f7a80c6  launch4j-3.8-linux.tgz"
+  | sha256sum -c
+- tar -C ext -xzf launch4j-3.8-linux.tgz
+- ant fetch
 script: ant windist
 notifications:
   email:
     on_success: change
     on_failure: always
-
 env:
   global:
     secure: hH+ndhQYLCfGaJ8XXW0GW9jO8wv4Ek0tDz3StzyVq9F+6meXOiGFIJ6MCyLPVZouxpCYj03PC0DunWAYYn+e3lgdMeOBLIg6/1BpOs5i0eHImE6O7pdo/+/jsHtR60PG9qRNfw2JXpPTI0F730o4UBi4V2eY2hWfmCIAWj61X9U=
-
 addons:
   apt:
     packages:
-      - libc6:i386
+    - libc6:i386
   coverity_scan:
     project:
       name: martinpaljak/idcrypt
@@ -30,14 +29,13 @@ addons:
     build_command_prepend: ant fetch
     build_command: ant compile
     branch_pattern: coverity
-
 deploy:
   file:
-    - idcrypt.jar
-    - idcrypt.exe
+  - idcrypt.jar
+  - idcrypt.exe
   provider: releases
   api-key:
-    secure: kUETLp7FylqzqjmpOdDMwVT3cPecn9gzDyipzuOV7+rL+xjL5ZxeHVNiK2QNRG1pLwih4IRhKQjPHofmUoc0pyLIfz7PjKojdpintBcHXUn7CIMhFMURd6+DmIRIX6HNVXQNd/bF8OOYV+Azfukx5FTUmB9HDbJ6L0BEHO0Dl3E=
+    secure: qeLGO6W02bJj92V38igk4miXf+HHa9LuPzUFrig/oQPaVErorxBOZm1Xy7rC4yU2VZzkIGe9XRpbA4/Br2XGYpchi+gwlQWHBuXRvO5ChONBbxu2RRfNJRCPool6Rs9P7nN0BtOwypIr6ryZHz2rnoooEXxcEgQgWq50s+z1cDrCTNMCPx3ouav5YiQxSD4pc9UK/fA90oTlNfRIoS8JG6rkafdwr9FepVPkK74rJAMlz9oJKWgSW/Yx1dPynaqlFjKIZoxtcWS4HdCQe279h3Rl1sBOMEd+DL6N6JEb8XnZeO5plFg2YBnsVmVzssSbwRXxQWX5LGfHHNFf+Fy7E72SOrrLsM+bS0YvLwtgoJaHeXBmGL52BxRZ+4QXWWOW/tQFwvigEqsPL9rSNuNPnMi3fetgVOnhV9cIN6d6vhc6jJIJKbGiPeLl2aOKJSKQSPoj9trUyBF0cbTNMcPU80lJKJx1LdPq5kEYs9quBykLo3h8TRaNLuXUuVNJ0FT6rU1U4icytAYJ7ac7z1xVYUZsPbyZ59nG072SEwyXvu9Y4CA0X+RNjp/YzBylfzfX2ANfgyeFfAJZGw489uBeiLyfu2F16cJ+7HK6JyqxQa4SS9g16CCv8BRqbQwENh48us42hXxm2rKD4OC5AT8Ci8dXzD1uVP4v7AL4ObwtikM=
   skip_cleanup: true
   on:
     tags: true
