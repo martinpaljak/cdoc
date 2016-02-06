@@ -28,6 +28,7 @@ Decrypt CDOC-s and encrypt against personal ID code
 ## Notes and caveats
  * CDOC only supports AES-128 in CBC mode
  * CDOC format does not mandate the use of MimeType (only way to distinguish a signed .ddoc)
+ * .idcrypt format uses AES-256 in GCM mode by default (can overrid with -c)
 
 ## Similar projects
  * qdigidoc
