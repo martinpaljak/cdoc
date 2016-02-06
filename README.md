@@ -24,12 +24,13 @@ Decrypt CDOC-s and encrypt files against personal ID code
  
  * If all arguments are existing files or valid ID-codes, they are used as intended.
  * Multiple input files mandate the use of -o
+ * Use -s to split payload from keys when encrypting
 
 ## Notes and caveats
- * CDOC 1.0 only supports AES-128 in CBC mode
+ * CDOC 1.0 format supports only AES-128 in CBC mode
  * CDOC 1.0 format does not mandate the use of MimeType (only way to distinguish a signed .ddoc)
+ * CDOC 1.0 format and implementations leak the original file name(s) by default
  * .idcrypt (CDOC 1.1 ?) format uses AES-256 in GCM mode by default (can overrid with -c)
- * Use -s to split payload from keys
 
 ## Similar projects
  * qdigidoc
