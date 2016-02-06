@@ -1,5 +1,5 @@
 # idcrypt
-Decrypt CDOC-s and encrypt against personal ID code
+Decrypt CDOC-s and encrypt files against personal ID code
 
 ## Usage
  * Fix a CDOC (replacing certificats where public key matches)
@@ -26,9 +26,10 @@ Decrypt CDOC-s and encrypt against personal ID code
  * Multiple input files mandate the use of -o
 
 ## Notes and caveats
- * CDOC only supports AES-128 in CBC mode
- * CDOC format does not mandate the use of MimeType (only way to distinguish a signed .ddoc)
- * .idcrypt format uses AES-256 in GCM mode by default (can overrid with -c)
+ * CDOC 1.0 only supports AES-128 in CBC mode
+ * CDOC 1.0 format does not mandate the use of MimeType (only way to distinguish a signed .ddoc)
+ * .idcrypt (CDOC 1.1 ?) format uses AES-256 in GCM mode by default (can overrid with -c)
+ * Use -s to split payload from keys
 
 ## Similar projects
  * qdigidoc
