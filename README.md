@@ -34,6 +34,7 @@ Decrypt CDOC-s and encrypt files against personal ID code
  * CDOC 1.0 implementation from libdigidoc actually has the plaintext IV in front of the payload inside CipherValue element (different from CDOC cpecification 4.3 and [W3C recommendation](https://www.w3.org/TR/2002/REC-xmlenc-core-20021210/Overview.html#sec-Nonce)).
  * CDOC 1.0 implementations seem to use double padding: PKCS7PAD(X923PAD(payload))
  * idcrypt implementation of CDOC supports only the "unsignd ddoc inside cdoc" format, which is: content files base64-d, put inside SignedDoc/DataFile XML elements, resulting XML srialization is encrypted and embedded inside a CDOC as base64 with a special MimeType attribute (in fact a URL to XML Schema). Only necessary (to make qdigidoccrypto recognize the content) non-standard "orig_file" elements inside denc:EncryptionProperty elements are generated with no identifiable names nor original file sizes.
+ * CDOC is more realistically a living implementation, rather than specified format.
  * .idcrypt (CDOC 1.1 ?) format uses AES-256 in GCM mode by default (can override with -c)
   * More information in [wiki](https://github.com/martinpaljak/idcrypt/wiki/IDCRYPT-AKA-CDOC-2.0-FORMAT)  
 
