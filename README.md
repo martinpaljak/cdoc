@@ -1,4 +1,4 @@
-# idcrypt
+# idcrypt &nbsp; [![Build Status](https://travis-ci.org/martinpaljak/idcrypt.svg?branch=master)](https://travis-ci.org/martinpaljak/idcrypt)
 Decrypt CDOC-s and encrypt files against personal ID code
 
 ## Usage
