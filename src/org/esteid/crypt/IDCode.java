@@ -49,10 +49,4 @@ public class IDCode {
         }
         return null;		
 	}
-
-	public static void main(String[] args) {
-		System.out.println(is_valid_idcode("38207162722"));
-		System.out.println(extract_idcode("lorem impsum(38207162722)"));
-		System.out.println(extract_idcode("lorem impsum(38207162723"));
-	}
 }

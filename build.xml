@@ -32,6 +32,7 @@
   </target>
   <!-- Build the software -->
   <path id="build.classpath">
+    <pathelement location="lib/jopt-simple-4.9.jar"/>
     <pathelement location="lib/bcprov-jdk15on-154.jar"/>
     <pathelement location="lib/bcpkix-jdk15on-154.jar"/>
     <pathelement location="lib/apdu4j.jar"/>
