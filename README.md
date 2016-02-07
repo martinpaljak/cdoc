@@ -27,7 +27,7 @@ Decrypt CDOC-s and encrypt files against personal ID code
  * Use -s to split payload from keys when encrypting
 
 ## Notes and caveats
- * [CDOC 1.0 format](http://id.ee/public/SK-CDOC-1.0-20120625_EN.pdf) supports only AES-128 in CBC mode
+ * [CDOC 1.0 format](http://id.ee/public/SK-CDOC-1.0-20120625_EN.pdf) supports only AES-128 in CBC mode (and has some weird padding issues)
  * CDOC 1.0 format does not mandate the use of MimeType (only way to distinguish a signed .ddoc) [spec](https://www.w3.org/TR/2002/REC-xmlenc-core-20021210/Overview.html#sec-EncryptedType)
  * CDOC 1.0 format and implementations leak the original file name(s) by default
  * CDOC 1.0 format is not valid according to XML-ENC schema (content and attributes of denc:EncryptionProperty are invalid)
