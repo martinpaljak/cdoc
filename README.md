@@ -31,6 +31,7 @@ Decrypt CDOC-s and encrypt files against personal ID code
  * CDOC 1.0 format does not mandate the use of MimeType (only way to distinguish a signed .ddoc) [spec](https://www.w3.org/TR/2002/REC-xmlenc-core-20021210/Overview.html#sec-EncryptedType)
  * CDOC 1.0 format and implementations leak the original file name(s) by default
  * CDOC 1.0 format is not valid according to XML-ENC schema (content and attributes of denc:EncryptionProperty are invalid)
+ * CDOC 1.0 implementation from libdigidoc actually has the IV in front of the payload inside CipherValue element (invalid according to spec 4.3)
  * .idcrypt (CDOC 1.1 ?) format uses AES-256 in GCM mode by default (can overrid with -c)
 
 ## Similar projects
