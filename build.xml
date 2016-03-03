@@ -46,7 +46,9 @@
     </javac>
   </target>
   <target name="dist" depends="compile" description="generate the distribution">
-    <exec command="git describe --always" output="version.txt"/>
+    <exec command="git describe --always --tags" output="build/org/esteid/crypt/version.txt"/>
+    <copy file="src/org/esteid/crypt/ESTEID-SK_2011.pem.crt" todir="build/org/esteid/crypt/"/>
+    <copy file="src/org/esteid/crypt/ESTEID-SK_2015.pem.crt" todir="build/org/esteid/crypt/"/>
     <java classname="proguard.ProGuard" fork="true" failonerror="true">
       <arg line="@idcrypt.pro"/>
       <classpath>
@@ -59,7 +61,6 @@
       <manifest>
         <attribute name="Main-Class" value="org.esteid.crypt.Tool"/>
       </manifest>
-      <fileset file="version.txt"/>
     </jar>
     <delete file="optimized-idcrypt.jar"/>
   </target>

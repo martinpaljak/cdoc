@@ -1,21 +1,26 @@
 package org.esteid.crypt;
 
+import java.io.BufferedReader;
 import java.io.Console;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.naming.NamingException;
 import javax.smartcardio.Card;
@@ -37,22 +42,27 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 
 public class Tool {
+	private static final String OPT_VERSION = "version";
 	private static final String OPT_FIX = "fix";
 	private static final String OPT_DECRYPT = "decrypt";
 	private static final String OPT_OUT = "out";
 	private static final String OPT_ENCRYPT = "encrypt";
 	private static final String OPT_CDOC = "cdoc";
+	private static final String OPT_SEARCH = "search";
 
 	public static void main(String[] argv) throws Exception {
 		OptionSet args = null;
 		OptionParser parser = new OptionParser();
 
 		// Generic options
+		parser.acceptsAll(Arrays.asList("V", OPT_VERSION), "Show version");
 		parser.acceptsAll(Arrays.asList("f", OPT_FIX), "Fix a CDOC").withRequiredArg().ofType(File.class);
 		parser.acceptsAll(Arrays.asList("d", OPT_DECRYPT), "Decrypt a file").withRequiredArg().ofType(File.class);
 		parser.acceptsAll(Arrays.asList("o", OPT_OUT), "Save output to").withRequiredArg();
 		parser.acceptsAll(Arrays.asList("e", OPT_ENCRYPT), "Encrypt a file").withRequiredArg();
+		parser.acceptsAll(Arrays.asList("s", OPT_SEARCH), "Search certificates based on ID-code").withRequiredArg();
 		parser.accepts(OPT_CDOC, "Generate CDOC 1.0 format");
+
 		OptionSpec<String> others = parser.nonOptions("args");
 
 		// Parse arguments
@@ -71,6 +81,29 @@ public class Tool {
 			System.exit(1);
 		}
 
+		if (args.has(OPT_VERSION)) {
+			System.out.println("IDCrypt " + getVersion());
+		}
+
+		Set<X509Certificate> issuers = get_issuers();
+
+		if (args.has(OPT_SEARCH)) {
+			List<String> codes = (List<String>) args.valuesOf(OPT_SEARCH);
+			for (String code: codes) {
+				Map<String, X509Certificate> m = LDAP.get_certs(code);
+				for (Map.Entry<String, X509Certificate> e: m.entrySet()) {
+					X509Certificate cert = e.getValue();
+					X509Certificate issuer = issued_by(cert, issuers);
+					Map<String, String> n = LDAP.cert2subjectmap(cert);
+					if (issuer == null) {
+						System.out.println(n.get("CN") + " is invalid!");
+					} else {
+						Map<String, String> cn = LDAP.cert2subjectmap(issuer);
+						System.out.println(n.get("CN") + " issued by " + cn.get("CN"));
+					}
+				}
+			}
+		}
 		if (args.has(OPT_FIX)) {
 			File f = (File) args.valueOf(OPT_FIX);
 			if (!f.isFile()) {
@@ -120,7 +153,7 @@ public class Tool {
 			List<File> files = new ArrayList<>();
 			List<String> codes = new ArrayList<>();
 			for (String arg: rest) {
-				File f = new File(arg);	
+				File f = new File(arg);
 				if (f.isFile()) {
 					files.add(f);
 					System.out.println(arg + " is a file");
@@ -136,7 +169,7 @@ public class Tool {
 				System.err.println("No input files!");
 				System.exit(1);
 			}
-			
+
 			List<X509Certificate> recipients = get_crypto_certs(codes);
 
 			// Encrypting
@@ -145,7 +178,7 @@ public class Tool {
 					System.err.println("Need -o(ut) with multiple input files!");
 					System.exit(1);
 				}
-				
+
 				File fout = new File((String)args.valueOf(OPT_OUT));
 				if (fout.exists()) {
 					System.out.println("Output file " + fout.getName() + " exists!");
@@ -165,6 +198,7 @@ public class Tool {
 
 	public static List<X509Certificate> get_crypto_certs(List<String> codes) {
 		List<X509Certificate> certs = new ArrayList<>();
+		Set<X509Certificate> issuers = get_issuers();
 		for (String code: codes) {
 			try {
 				Map<String, X509Certificate> m = LDAP.get_certs(code);
@@ -173,6 +207,10 @@ public class Tool {
 						continue;
 					}
 					if (!k.getKey().contains("authentication")) {
+						continue;
+					}
+					if (issued_by(k.getValue(), issuers) == null) {
+						System.err.println(k.getKey() + " verification failed!");
 						continue;
 					}
 					certs.add(k.getValue());
@@ -257,5 +295,45 @@ public class Tool {
 			}
 		}
 		throw new IllegalStateException("This application expects an EstEID card but none is available!");
+	}
+
+	public static String getVersion() {
+		String version = "unknown-development";
+		try (InputStream versionfile = Tool.class.getResourceAsStream("version.txt")) {
+			if (versionfile != null) {
+				try (BufferedReader vinfo = new BufferedReader(new InputStreamReader(versionfile))) {
+					version = vinfo.readLine();
+				}
+			}
+		} catch (IOException e) {
+			version = "unknown-error";
+		}
+		return version;
+	}
+
+	public static Set<X509Certificate> get_issuers() {
+		Set<X509Certificate> s = new HashSet<>();
+		try {
+			CertificateFactory fact = CertificateFactory.getInstance("X.509");
+			X509Certificate cert1 = (X509Certificate) fact.generateCertificate(Tool.class.getResourceAsStream("ESTEID-SK_2011.pem.crt"));
+			X509Certificate cert2 = (X509Certificate) fact.generateCertificate(Tool.class.getResourceAsStream("ESTEID-SK_2015.pem.crt"));
+			s.add(cert1);
+			s.add(cert2);
+		} catch (GeneralSecurityException e) {
+			e.printStackTrace();
+		}
+		return s;
+	}
+
+	public static X509Certificate issued_by(X509Certificate cert, Set<X509Certificate> issuers) {
+		for (X509Certificate issuer: issuers) {
+			try {
+				cert.verify(issuer.getPublicKey());
+				return issuer;
+			} catch (GeneralSecurityException e) {
+				continue;
+			}
+		}
+		return null;
 	}
 }

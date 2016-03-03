@@ -9,6 +9,7 @@ import java.util.Hashtable;
 import java.util.Map;
 
 import javax.naming.Context;
+import javax.naming.InvalidNameException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -16,6 +17,10 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
+
+import apdu4j.HexUtils;
 
 public class LDAP {
 
@@ -46,6 +51,19 @@ public class LDAP {
 		return certs;
 	}
 
+	// Extract meaningful values from subject to a handy map
+	public static Map<String, String> cert2subjectmap(X509Certificate c) throws InvalidNameException {
+		Map<String, String> m = new HashMap<>();
+		LdapName ldapDN = new LdapName(c.getSubjectX500Principal().getName());
+		for(Rdn rdn: ldapDN.getRdns()) {
+			if (rdn.getValue() instanceof byte[]) {
+				m.put(rdn.getType(), HexUtils.bin2hex((byte[]) rdn.getValue()));
+			} else if (rdn.getValue() instanceof String) {
+				m.put(rdn.getType(), (String) rdn.getValue());
+			}
+		}
+		return m;
+	}
 	public static void main(String[] args) throws Exception {
 		Map<String, X509Certificate> certs = get_certs("38207162722");
 		for(Map.Entry<String, X509Certificate> entry: certs.entrySet()) {
