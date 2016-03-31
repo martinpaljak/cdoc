@@ -180,10 +180,8 @@ public class Tool {
 				File f = new File(arg);
 				if (f.isFile()) {
 					files.add(f);
-					System.out.println(arg + " is a file");
 				} else if (IDCode.is_valid_idcode(arg)) {
 					codes.add(arg);
-					System.out.println(arg + " is an idcode");
 				}  else {
 					System.err.println(arg + " is not a file nor ID-code!");
 					System.exit(1);

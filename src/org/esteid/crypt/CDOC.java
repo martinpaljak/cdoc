@@ -16,7 +16,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -49,8 +48,6 @@ import org.w3c.dom.ls.LSOutput;
 import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-
-import apdu4j.HexUtils;
 
 public class CDOC {
 
@@ -105,7 +102,14 @@ public class CDOC {
 	public static CDOC fromFile(String path) throws FileNotFoundException, CDOCExcption {
 		try {
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			dbf.setXIncludeAware(false);
+			dbf.setExpandEntityReferences(false);
 			dbf.setNamespaceAware(true);
+			dbf.setFeature("http://xml.org/sax/features/validation", false);
+			dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+			dbf.setFeature("http://apache.org/xml/features/validation/schema", false);
+			dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+			dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
 			DocumentBuilder db = dbf.newDocumentBuilder();
 			Document doc = db.parse(new InputSource(new FileInputStream(path)));
 			return new CDOC(doc, new File(path));
@@ -233,7 +237,7 @@ public class CDOC {
 			File fn = new File("/tmp/" + entry.getKey());
 			FileOutputStream out = new FileOutputStream(fn);
 			out.write(entry.getValue());
-			System.out.println("Stored " + fn.getAbsolutePath());
+			System.out.println("Stored " + fn.getCanonicalPath());
 			out.close();
 		}
 	}
@@ -388,7 +392,7 @@ public class CDOC {
 			Node propname = cdoc.createAttribute("Name");
 			propname.setTextContent("orig_file");
 			prop.getAttributes().setNamedItem(propname);
-			prop.setTextContent("😳 - decrypt me!|1|application/octet-stream|D0");
+			prop.setTextContent("😳 - decrypt me!|1|application/octet-stream|D" + files.indexOf(f));
 			props.appendChild(prop);
 		}
 		root.appendChild(props);
