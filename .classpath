@@ -7,5 +7,6 @@
 	<classpathentry kind="lib" path="lib/apdu4j.jar"/>
 	<classpathentry kind="lib" path="lib/esteid.jar"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk15on-154.jar"/>
+	<classpathentry kind="lib" path="lib/bcpkix-jdk15on-154.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
