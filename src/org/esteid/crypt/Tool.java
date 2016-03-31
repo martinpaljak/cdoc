@@ -3,6 +3,7 @@ package org.esteid.crypt;
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -48,6 +49,8 @@ public class Tool {
 	private static final String OPT_OUT = "out";
 	private static final String OPT_ENCRYPT = "encrypt";
 	private static final String OPT_CDOC = "cdoc";
+	private static final String OPT_BDOC = "bdoc";
+
 	private static final String OPT_SEARCH = "search";
 
 	public static void main(String[] argv) throws Exception {
@@ -61,6 +64,7 @@ public class Tool {
 		parser.acceptsAll(Arrays.asList("o", OPT_OUT), "Save output to").withRequiredArg();
 		parser.acceptsAll(Arrays.asList("e", OPT_ENCRYPT), "Encrypt a file").withRequiredArg();
 		parser.acceptsAll(Arrays.asList("s", OPT_SEARCH), "Search certificates based on ID-code").withRequiredArg();
+		parser.acceptsAll(Arrays.asList("b", OPT_BDOC), "Transform BDOC").withRequiredArg().ofType(File.class);
 		parser.accepts(OPT_CDOC, "Generate CDOC 1.0 format");
 
 		OptionSpec<String> others = parser.nonOptions("args");
@@ -104,7 +108,28 @@ public class Tool {
 				}
 			}
 		}
-		if (args.has(OPT_FIX)) {
+
+		if (args.has(OPT_BDOC)) {
+			File f = (File) args.valueOf(OPT_BDOC);
+			if (!f.isFile()) {
+				System.err.println("-b(doc) must address a file!");
+			}
+			try (FileInputStream fin = new FileInputStream(f)) {
+
+				File of = f;
+				if (args.has(OPT_OUT)) {
+					of = (File)args.valueOf(OPT_OUT);
+				}
+
+				File tmp = File.createTempFile(f.getName(), "bdocfix", parentOrCWD(f));
+				tmp.deleteOnExit();
+				try (FileOutputStream fos = new FileOutputStream(tmp)) {
+					BDOC.fix(fin, fos);
+				}
+				// Replace
+				Files.move(tmp.toPath(), of.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+			}
+		} else if (args.has(OPT_FIX)) {
 			File f = (File) args.valueOf(OPT_FIX);
 			if (!f.isFile()) {
 				System.err.println("-f(ix) must address a file!");
@@ -116,14 +141,13 @@ public class Tool {
 			System.out.println("Right certificate has serial " + cert.getSerialNumber().toString(16));
 			byte[] fixed = CDOC.fix(c, cert);
 
-			File of;
+			File of = f;
 			if (args.has(OPT_OUT)) {
 				of = (File)args.valueOf(OPT_OUT);
-			} else {
-				of = f;
 			}
 
-			File tmp = File.createTempFile(f.getName(), "fix", f.getParentFile());
+			File tmp = File.createTempFile(f.getName(), "fix", parentOrCWD(f));
+			tmp.deleteOnExit();
 			try (FileOutputStream fos = new FileOutputStream(tmp)) {
 				fos.write(fixed);
 			}
@@ -335,5 +359,11 @@ public class Tool {
 			}
 		}
 		return null;
+	}
+
+	static File parentOrCWD(File f) {
+		if (f.getParentFile() == null)
+			return new File(".");
+		return f.getParentFile();
 	}
 }
