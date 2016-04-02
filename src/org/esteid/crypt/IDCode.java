@@ -28,25 +28,28 @@ public class IDCode {
 		// First round
 		int csum = multsum(first, original) % 11;
 		if (csum == 10) {
+			csum = multsum(second, original) % 11;
 			// Second round
-			if ((multsum(second, original) % 11) == 10)
+			if (csum == 10) {
 				csum = 0;
+			}
 		}
 		// check
-		if (csum == original[original.length - 1])
+		if (csum == original[original.length - 1]) {
 			return true;
+		}
 		return false;
 	}
-	
+
 	public static String extract_idcode(String s) {
 		Pattern p = Pattern.compile("\\d{11}");
-        Matcher m = p.matcher(s);
-        while (m.find()) {
-        	String c = m.group();
-    		if (is_valid_idcode(c)) {
-    			return c;
-    		}
-        }
-        return null;		
+		Matcher m = p.matcher(s);
+		while (m.find()) {
+			String c = m.group();
+			if (is_valid_idcode(c)) {
+				return c;
+			}
+		}
+		return null;
 	}
 }
