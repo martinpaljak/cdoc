@@ -196,13 +196,17 @@ public class Tool {
 
 			// Encrypting
 			if (recipients.size() > 0) {
-				if (!args.has(OPT_OUT)) {
-					System.err.println("Need -o(ut) with multiple input files!");
-					System.exit(1);
+				final File fout;
+				if (files.size() > 1) {
+					if (!args.has(OPT_OUT)) {
+						System.err.println("Need -o(ut) with multiple input files!");
+						System.exit(1);
+					}
+					fout = new File((String)args.valueOf(OPT_OUT));
+				} else {
+					fout = new File(files.get(0).getName() + ".cdoc");
 				}
-
-				File fout = new File((String)args.valueOf(OPT_OUT));
-				if (fout.exists()) {
+				if (fout.exists()) { // TODO add -f
 					System.out.println("Output file " + fout.getName() + " exists!");
 					System.exit(1);
 				}
