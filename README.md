@@ -36,7 +36,7 @@ Decrypt CDOC-s and encrypt files against personal ID code
  * idcrypt implementation of CDOC 1.0 supports only the "unsigned ddoc inside cdoc" format, which is: content files base64-d, put inside SignedDoc/DataFile XML elements, resulting XML serialization is encrypted and embedded inside a CDOC as base64 with a special MimeType attribute (in fact a URL to XML Schema). Only necessary (to make qdigidoccrypto recognize the content) non-standard "orig_file" elements inside denc:EncryptionProperty elements are generated with no identifiable names nor original file sizes.
  * CDOC 1.0 is more realistically a living implementation, rather than specified format.
  * CDOC 2.0 format uses AES-256 in GCM mode by default (can override with -c)
-  * More information in [wiki](https://github.com/martinpaljak/idcrypt/wiki/IDCRYPT-AKA-CDOC-2.0-FORMAT)  
+  * More information in [CDOC 2.0 wiki](https://github.com/martinpaljak/idcrypt/wiki/CDOC-2.0)  
 
 ## Similar projects
  * qdigidoc
@@ -44,5 +44,5 @@ Decrypt CDOC-s and encrypt files against personal ID code
    * :( only supports CDOC 1.0 (see above)
  * GnuPG
    * :) widely supported format
-   * :( only "web of trust" interface
-   * :( cumbersome access to on-card keys
+   * :( only "web of trust" input for keys
+   * :( cumbersome access to on-card keys (http://gnupg-pkcs11.sourceforge.net/)
