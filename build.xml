@@ -4,16 +4,16 @@
   <target name="fetch" description="fetch the dependencies">
     <mkdir dir="lib"/>
     <!-- Remember to update .classpath as well! -->
-    <get src="https://repo1.maven.org/maven2/net/sf/jopt-simple/jopt-simple/4.9/jopt-simple-4.9.jar" dest="lib" verbose="true" skipexisting="true"/>
-    <get src="http://downloads.bouncycastle.org/java/bcprov-jdk15on-154.jar" dest="lib" verbose="true" skipexisting="true"/>
-    <get src="http://downloads.bouncycastle.org/java/bcpkix-jdk15on-154.jar" dest="lib" verbose="true" skipexisting="true"/>
+    <get src="https://repo1.maven.org/maven2/net/sf/jopt-simple/jopt-simple/5.0.2/jopt-simple-5.0.2.jar" dest="lib" verbose="true" skipexisting="true"/>
+    <get src="https://downloads.bouncycastle.org/java/bcprov-jdk15on-155.jar" dest="lib" verbose="true" skipexisting="true"/>
+    <get src="https://downloads.bouncycastle.org/java/bcpkix-jdk15on-155.jar" dest="lib" verbose="true" skipexisting="true"/>
     <get src="https://github.com/martinpaljak/apdu4j/releases/download/v0.0.29/apdu4j.jar" dest="lib" verbose="true" skipexisting="true"/>
     <get src="https://github.com/martinpaljak/esteidhacker/releases/download/r1.2/esteid.jar" dest="lib" verbose="true" skipexisting="true"/>
     <get src="http://central.maven.org/maven2/net/sf/proguard/proguard-base/5.2.1/proguard-base-5.2.1.jar" dest="lib" verbose="true" skipexisting="true"/>
 
-    <checksum algorithm="SHA-256" file="lib/jopt-simple-4.9.jar" property="26c5856e954b5f864db76f13b86919b59c6eecf9fd930b96baa8884626baf2f5" verifyProperty="joptOK"/>
-    <checksum algorithm="SHA-256" file="lib/bcprov-jdk15on-154.jar" property="d0ae14598f9c528d2ab7bb8ed00e785a5440f692712cd362d69328aba25efb57" verifyProperty="bouncy1OK"/>
-    <checksum algorithm="SHA-256" file="lib/bcpkix-jdk15on-154.jar" property="d618dcfbf0337b91015b21d4b398175ae96382a82c7e1d6e8c657fcd236463c7" verifyProperty="bouncy2OK"/>
+    <checksum algorithm="SHA-256" file="lib/jopt-simple-5.0.2.jar" property="457877c79e038f390557db5f8e92c4436fb4f4b3ba63f28bc228500fee080193" verifyProperty="joptOK"/>
+    <checksum algorithm="SHA-256" file="lib/bcprov-jdk15on-155.jar" property="c08450a176b55c7ef4847111550eb247e5912ad450c8c225fa2f7cab74ce608b" verifyProperty="bouncy1OK"/>
+    <checksum algorithm="SHA-256" file="lib/bcpkix-jdk15on-155.jar" property="d7cc06e92f0d117989cc7035f697c69c7c355838b2de3dc35491441afea09ca9" verifyProperty="bouncy2OK"/>
     <checksum algorithm="SHA-256" file="lib/apdu4j.jar" property="1223e4568a1cfbd19990598e6d9c70db5ab520aaf2d60fa834972605ac90a0cd" verifyProperty="apduOK"/>
     <checksum algorithm="SHA-256" file="lib/esteid.jar" property="f0e955f30dca0195f02c7e6486e5077d71aa611aa7a048058852ce98eafdd256" verifyProperty="esteidOK"/>
     <checksum algorithm="SHA-256" file="lib/proguard-base-5.2.1.jar" property="f163bdd73c58cbc9b789ab14f5d602b4994dbd82eacb5d54b3bd2a95de63f3bf" verifyProperty="proguardOK"/>
@@ -32,9 +32,9 @@
   </target>
   <!-- Build the software -->
   <path id="build.classpath">
-    <pathelement location="lib/jopt-simple-4.9.jar"/>
-    <pathelement location="lib/bcprov-jdk15on-154.jar"/>
-    <pathelement location="lib/bcpkix-jdk15on-154.jar"/>
+    <pathelement location="lib/jopt-simple-5.0.2.jar"/>
+    <pathelement location="lib/bcprov-jdk15on-155.jar"/>
+    <pathelement location="lib/bcpkix-jdk15on-155.jar"/>
     <pathelement location="lib/apdu4j.jar"/>
     <pathelement location="lib/esteid.jar"/>
   </path>
