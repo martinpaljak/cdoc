@@ -27,7 +27,7 @@ Information about transport keys, recipients etc is stored in `META-INF/recipien
 * The format MAY be used with ZIP64 extension.
 * Storage of encrypted files MUST follow the rules laid down in [OpenDocument section 3.4.1](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html#__RefHeading__752813_826425813), regarding deflation before storage and actual size in manifest.
 * Multiple encrypted files MUST be encapsulated as ZIP containers, which implementations MAY display as sparse files after encryption
-
+* The payload of the package MUST NOT contain subfolders. All encrypted files MUST reside in the root folder.
 
 ## Implementation requirements
 * Implementations SHOULD support ZIP64 for files larger than 4GB
