@@ -25,6 +25,7 @@ This scheme is comparable to ASiC ODF containers, where multiple files are bound
 ## Package requirements
 * The mime type of CDOC v2.0 is `application/x-cryptodoc`
 * The file extension SHOULD be `.cdoc`
+* The mime type SHOULD be present in Zip comment (ASiC 6.2.1 clause 3)
 * The `mimetype` file MUST be present, together with the `media-type` manifest element for the package (See [OpenDocument: 3.3 MIME Media Type](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html#MIME_type_stream))
 * The format MAY be used with ZIP64 extension.
 * Storage of encrypted files MUST follow the rules laid down in [OpenDocument section 3.4.1](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html#__RefHeading__752813_826425813), regarding deflation before storage and actual size in manifest.
