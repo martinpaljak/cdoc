@@ -39,9 +39,23 @@ This scheme is comparable to ASiC ODF containers, where multiple files are bound
 * Formatting of encrypted files (IV, padding, authentication tags etc) MUST conform to XML-ENC
 
 ## ID-card profile
+
 The use with Estonian ID-card defaults to:
- * RSA 2048 PKCS#1 v1.5 for transport key encryption
- * AES-GCM 256 for transport key
+ 
+* RSA 2048 PKCS#1 v1.5 for transport key encryption
+* AES-GCM 256 for transport key
+* `META-INF/recipients.txt` snippet:
+
+```
+<EncryptedData>
+  <EncryptionMethod Algorithm='http://www.w3.org/2009/xmlenc11#aes256-gcm'/>
+  <EncryptedKey>
+    <EncryptionMethod Algorithm='http://www.w3.org/2001/04/xmlenc#rsa-1_5'/>
+    ...
+  </EncryptedKey>
+  ...
+</EncryptedData>
+```
 
 ## Samples of `META-INF/recipients.txt`
 
