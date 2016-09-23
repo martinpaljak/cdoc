@@ -20,13 +20,15 @@ CDOC v2.0 files are essentially [OpenDocument v1.2](https://docs.oasis-open.org/
 
 Information about transport keys, recipients etc is stored in `META-INF/recipients.xml` which conforms to [XML-ENC](https://www.w3.org/TR/xmlenc-core/) standard and schema.
 
+This scheme is comparable to ASiC ODF containers, where multiple files are bound like with ASiC-S.
+
 ## Package requirements
 * The mime type of CDOC v2.0 is `application/x-cryptodoc`
 * The file extension SHOULD be `.cdoc`
 * The `mimetype` file MUST be present, together with the `media-type` manifest element for the package (See [OpenDocument: 3.3 MIME Media Type](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html#MIME_type_stream))
 * The format MAY be used with ZIP64 extension.
 * Storage of encrypted files MUST follow the rules laid down in [OpenDocument section 3.4.1](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html#__RefHeading__752813_826425813), regarding deflation before storage and actual size in manifest.
-* Multiple encrypted files MUST be encapsulated as ZIP containers, which implementations MAY display as sparse files after encryption
+* Multiple encrypted files MUST be encapsulated as ZIP containers, which implementations MAY display as sparse files after encryption (ASiC B.1.3)
 * The payload of the package MUST NOT contain subfolders. All encrypted files MUST reside in the root folder.
 
 ## Implementation requirements
@@ -34,6 +36,11 @@ Information about transport keys, recipients etc is stored in `META-INF/recipien
   * Lack of support for ZIP64 MUST be documented in accompanying documentation
 * Implementations SHOULD allow to decrypt files which lack proper MIME information
 * Formatting of encrypted files (IV, padding, authentication tags etc) MUST conform to XML-ENC
+
+## ID-card profile
+The use with Estonian ID-card defaults to:
+ * RSA 2048 PKCS#1 v1.5 for transport key encryption
+ * AES-GCM 256 for transport key
 
 ## Samples of `META-INF/recipients.txt`
 
