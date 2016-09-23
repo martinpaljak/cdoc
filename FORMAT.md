@@ -31,14 +31,15 @@ This scheme is comparable to ASiC ODF containers, where multiple files are bound
 * The `mimetype` file MUST be present, together with the `media-type` manifest element for the package (See [OpenDocument: 3.3 MIME Media Type](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html#MIME_type_stream))
 * The format MAY be used with ZIP64 extension.
 * Storage of encrypted files MUST follow the rules laid down in [OpenDocument section 3.4.1](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html#__RefHeading__752813_826425813), regarding deflation before storage and actual size in manifest.
-* Multiple encrypted files MUST be encapsulated as ZIP containers, which implementations MAY display as sparse files after encryption (ASiC B.1.3)
+* Multiple encrypted files MUST be encapsulated as ZIP containers, which implementations MAY display inline after encryption (ASiC B.1.3)
+* Payload ZIP encapsulation MAY be used for a single file, to hide original file name
 * The payload of the package MUST NOT contain subfolders. All encrypted files MUST reside in the root folder.
 
 ## Implementation requirements
 * Implementations SHOULD support ZIP64 for files larger than 4GB
   * Lack of support for ZIP64 MUST be documented in accompanying documentation
 * Implementations SHOULD allow to decrypt files which lack proper MIME information
-* Formatting of encrypted files (IV, padding, authentication tags etc) MUST conform to XML-ENC
+* Formatting of encrypted files (IV, padding, authentication tags etc) MUST conform to XML-ENC (XML-ENC 5.2: Block Encryption Algorithms)
 
 ## ID-card profile
 
