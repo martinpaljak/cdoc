@@ -46,7 +46,7 @@ The use with Estonian ID-card defaults to:
  
 * RSA 2048 PKCS#1 v1.5 for transport key encryption
 * AES-GCM 256 for transport key
-* `META-INF/recipients.txt` snippet:
+* `META-INF/recipients.xml` snippet:
 
 ```
 <EncryptedData>
@@ -59,7 +59,7 @@ The use with Estonian ID-card defaults to:
 </EncryptedData>
 ```
 
-## Samples of `META-INF/recipients.txt`
+## Samples of `META-INF/recipients.xml`
 
 ### Encryption of a single file with a pre-shared key
 `READMe.txt` is encrypted with AES-GCM 256 and the key itself is supposedly known to the receiver via ot of band means
