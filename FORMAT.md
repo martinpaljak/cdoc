@@ -11,6 +11,7 @@ It defines and clarifies the subset of relevant standards and provides guideline
 ## References
 - [OpenDocument v1.2 part 3: packages](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html)
 - [ETSI TS 102 918 V1.3.1 (ASiC)](http://www.etsi.org/deliver/etsi_ts/102900_102999/102918/01.03.01_60/ts_102918v010301p.pdf)
+- [ETSI EN 319 162-1 V1.1.1 (ASiC baseline containers)](http://www.etsi.org/deliver/etsi_en/319100_319199/31916201/01.01.01_60/en_31916201v010101p.pdf)
 - [XML Encryption Syntax and Processing](https://www.w3.org/TR/xmlenc-core/)
 - [XML Encryption Syntax and Processing Version 1.1](https://www.w3.org/TR/xmlenc-core1/)
 - [XML Signature Syntax and Processing (Second Edition)](https://www.w3.org/TR/xmldsig-core/)
@@ -33,6 +34,7 @@ This scheme is comparable to ASiC-S ODF containers.
 * Storage of encrypted files MUST follow the rules laid down in [OpenDocument section 3.4.1](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html#__RefHeading__752813_826425813), regarding deflation before storage and actual size in manifest.
 * Multiple encrypted files MUST be encapsulated as ZIP containers, which implementations MAY display inline after encryption (ASiC B.1.3)
 * Payload ZIP encapsulation MAY be used for a single file, to hide original file name
+* The name of the encapsulated ZIP files SHOULD be `payload.zip`
 * The payload of the package MUST NOT contain subfolders. All encrypted files MUST reside in the root folder.
 
 ## Implementation requirements
@@ -100,3 +102,12 @@ The file `Important.bdoc` is encrypted with AES-256 in GCM mode. The transport k
 ## Transition tips
 - v2.0 has the bytes `PK` as the first two bytes of the file
 - v1.0 has the XML header `<?` or relevant BOM in the first bytes of the file
+
+## Rationale for format
+The original goal was to accommodate encrypted and signed (XAdES) payloads inside a single ASiC container (.bdoc). This already sets the scene for capabilities of potential implementors: ZIP processing (for container) and XML processing (for signatures.xml as well as manifest.xml) is readily available in all modern development platforms.
+
+Both [ZIP](https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) and [ODF](http://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html#__RefHeading__752811_826425813) have encryption capabilities, but mostly bound to a fixed password-based key derivation scheme and implementation-specific if not proprietary encryption options. Re-implementation of such formats would give no flexibility and no real cross-usage benefits.
+
+For actual binary storage of encrypted data inside the ZIP container, formats such as [CMS aka S/MIME (RFC 5652)](https://tools.ietf.org/html/rfc5652) or [OpenPGP (RFC 4880)](https://tools.ietf.org/html/rfc4880) could be used, but would offer little benefit in the container context (and thus no real benefit in cross-usage).
+
+XML - while somewhat morally outdated - is by definition extensible and thus allows to build upon the base specification without heavily changing the implementations.
