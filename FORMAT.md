@@ -12,6 +12,7 @@ It defines and clarifies the subset of relevant standards and provides guideline
 - [OpenDocument v1.2 part 3: packages](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html)
 - [ETSI TS 102 918 V1.3.1 (ASiC)](http://www.etsi.org/deliver/etsi_ts/102900_102999/102918/01.03.01_60/ts_102918v010301p.pdf)
 - [ETSI EN 319 162-1 V1.1.1 (ASiC baseline containers)](http://www.etsi.org/deliver/etsi_en/319100_319199/31916201/01.01.01_60/en_31916201v010101p.pdf)
+- [ETSI EN 319 162-2 V1.1.1 (Additional ASiC containers)](http://www.etsi.org/deliver/etsi_en/319100_319199/31916202/01.01.01_60/en_31916202v010101p.pdf)
 - [XML Encryption Syntax and Processing](https://www.w3.org/TR/xmlenc-core/)
 - [XML Encryption Syntax and Processing Version 1.1](https://www.w3.org/TR/xmlenc-core1/)
 - [XML Signature Syntax and Processing (Second Edition)](https://www.w3.org/TR/xmldsig-core/)
