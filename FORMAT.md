@@ -10,7 +10,6 @@ It defines and clarifies the subset of relevant standards and provides guideline
 
 ## References
 - [OpenDocument v1.2 part 3: packages](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html)
-- [ETSI TS 102 918 V1.3.1 (ASiC)](http://www.etsi.org/deliver/etsi_ts/102900_102999/102918/01.03.01_60/ts_102918v010301p.pdf)
 - [ETSI EN 319 162-1 V1.1.1 (ASiC baseline containers)](http://www.etsi.org/deliver/etsi_en/319100_319199/31916201/01.01.01_60/en_31916201v010101p.pdf)
 - [ETSI EN 319 162-2 V1.1.1 (Additional ASiC containers)](http://www.etsi.org/deliver/etsi_en/319100_319199/31916202/01.01.01_60/en_31916202v010101p.pdf)
 - [XML Encryption Syntax and Processing](https://www.w3.org/TR/xmlenc-core/)
@@ -33,7 +32,7 @@ This scheme is comparable to ASiC-S ODF containers.
 * The `mimetype` file MUST be present, together with the `media-type` manifest element for the package (See [OpenDocument: 3.3 MIME Media Type](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html#MIME_type_stream))
 * The format MAY be used with ZIP64 extension.
 * Storage of encrypted files MUST follow the rules laid down in [OpenDocument section 3.4.1](https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part3.html#__RefHeading__752813_826425813), regarding deflation before storage and actual size in manifest.
-* Multiple encrypted files MUST be encapsulated as ZIP containers, which implementations MAY display inline after encryption (ASiC B.1.3)
+* Multiple encrypted files MUST be encapsulated as ZIP containers, which implementations MAY display inline after encryption (ASiC baseline B.1.3)
 * Payload ZIP encapsulation MAY be used for a single file, to hide original file name
 * The name of the encapsulated ZIP files SHOULD be `payload.zip`
 * The payload of the package MUST NOT contain subfolders. All encrypted files MUST reside in the root folder.
