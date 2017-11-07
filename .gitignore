@@ -14,3 +14,7 @@ hs_err_pid*
 /bin/
 /lib/
 /build/
+/target/
+/tmp/
+/.idea
+*.iml

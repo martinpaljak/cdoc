@@ -2,75 +2,39 @@
 <project name="idcrypt" default="dist" basedir=".">
   <description>Decrypt files with ID-card</description>
   <target name="fetch" description="fetch the dependencies">
-    <mkdir dir="lib"/>
-    <!-- Remember to update .classpath as well! -->
-    <get src="https://repo1.maven.org/maven2/net/sf/jopt-simple/jopt-simple/5.0.2/jopt-simple-5.0.2.jar" dest="lib" verbose="true" skipexisting="true"/>
-    <get src="https://downloads.bouncycastle.org/java/bcprov-jdk15on-155.jar" dest="lib" verbose="true" skipexisting="true"/>
-    <get src="https://downloads.bouncycastle.org/java/bcpkix-jdk15on-155.jar" dest="lib" verbose="true" skipexisting="true"/>
-    <get src="https://github.com/martinpaljak/apdu4j/releases/download/v0.0.29/apdu4j.jar" dest="lib" verbose="true" skipexisting="true"/>
-    <get src="https://github.com/martinpaljak/esteidhacker/releases/download/r1.2/esteid.jar" dest="lib" verbose="true" skipexisting="true"/>
-    <get src="http://central.maven.org/maven2/net/sf/proguard/proguard-base/5.2.1/proguard-base-5.2.1.jar" dest="lib" verbose="true" skipexisting="true"/>
-
-    <checksum algorithm="SHA-256" file="lib/jopt-simple-5.0.2.jar" property="457877c79e038f390557db5f8e92c4436fb4f4b3ba63f28bc228500fee080193" verifyProperty="joptOK"/>
-    <checksum algorithm="SHA-256" file="lib/bcprov-jdk15on-155.jar" property="c08450a176b55c7ef4847111550eb247e5912ad450c8c225fa2f7cab74ce608b" verifyProperty="bouncy1OK"/>
-    <checksum algorithm="SHA-256" file="lib/bcpkix-jdk15on-155.jar" property="d7cc06e92f0d117989cc7035f697c69c7c355838b2de3dc35491441afea09ca9" verifyProperty="bouncy2OK"/>
-    <checksum algorithm="SHA-256" file="lib/apdu4j.jar" property="1223e4568a1cfbd19990598e6d9c70db5ab520aaf2d60fa834972605ac90a0cd" verifyProperty="apduOK"/>
-    <checksum algorithm="SHA-256" file="lib/esteid.jar" property="f0e955f30dca0195f02c7e6486e5077d71aa611aa7a048058852ce98eafdd256" verifyProperty="esteidOK"/>
-    <checksum algorithm="SHA-256" file="lib/proguard-base-5.2.1.jar" property="f163bdd73c58cbc9b789ab14f5d602b4994dbd82eacb5d54b3bd2a95de63f3bf" verifyProperty="proguardOK"/>
+    <mkdir dir="ext"/>
+    <get src="http://central.maven.org/maven2/net/sf/proguard/proguard-base/5.3/proguard-base-5.3.jar" dest="ext" verbose="true" skipexisting="true"/>
+  </target>
+  <target name="check" unless="insecure" depends="fetch">
+    <checksum algorithm="SHA-256" file="ext/proguard-base-5.3.jar" property="6ddbbcbd3ef979a588ee2732920b00c335649dcb72f464eaaf0ce9685a539572" verifyProperty="proguardOK"/>
     <fail message="Checksum failure">
       <condition>
         <or>
-          <isfalse value="${joptOK}"/>	
-          <isfalse value="${bouncy1OK}"/>
-          <isfalse value="${bouncy2OK}"/>
-          <isfalse value="${apduOK}"/>
-          <isfalse value="${esteidOK}"/>
           <isfalse value="${proguardOK}"/>
         </or>
       </condition>
     </fail>
   </target>
-  <!-- Build the software -->
-  <path id="build.classpath">
-    <pathelement location="lib/jopt-simple-5.0.2.jar"/>
-    <pathelement location="lib/bcprov-jdk15on-155.jar"/>
-    <pathelement location="lib/bcpkix-jdk15on-155.jar"/>
-    <pathelement location="lib/apdu4j.jar"/>
-    <pathelement location="lib/esteid.jar"/>
-  </path>
-  <target name="compile" description="compile the source" depends="fetch">
-    <mkdir dir="build"/>
-    <javac srcdir="src" destdir="build" includeantruntime="false" excludes="**/tests/**" debug="true" debuglevel="lines,vars,source">
-      <compilerarg value="-Xlint"/>
-      <classpath refid="build.classpath"/>
-    </javac>
-  </target>
-  <target name="dist" depends="compile" description="generate the distribution">
-    <exec command="git describe --always --tags" output="build/org/esteid/crypt/version.txt"/>
-    <copy file="src/org/esteid/crypt/ESTEID-SK_2011.pem.crt" todir="build/org/esteid/crypt/"/>
-    <copy file="src/org/esteid/crypt/ESTEID-SK_2015.pem.crt" todir="build/org/esteid/crypt/"/>
+  <target name="dist" description="generate the distribution">
     <java classname="proguard.ProGuard" fork="true" failonerror="true">
       <arg line="@idcrypt.pro"/>
       <classpath>
-        <pathelement location="lib/proguard-base-5.2.1.jar"/>
+        <pathelement location="ext/proguard-base-5.3.jar"/>
       </classpath>
     </java>
-    <jar destfile="idcrypt.jar" level="9">
-      <zipfileset src="lib/apdu4j.jar"/>
-      <zipfileset src="optimized-idcrypt.jar" excludes="org/bouncycastle/x509/"/>
-      <manifest>
-        <attribute name="Main-Class" value="org.esteid.crypt.Tool"/>
-      </manifest>
-    </jar>
-    <delete file="optimized-idcrypt.jar"/>
   </target>
   <target name="windist" depends="dist" description="package as .exe">
     <property name="launch4j.dir" location="ext/launch4j"/>
     <taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar"/>
     <launch4j>
-      <config headerType="console" outfile="idcrypt.exe" jar="idcrypt.jar" errTitle="idcrypt">
+      <config headerType="console" outfile="cdoc.exe" jar="cdoc.jar" errTitle="cdoc">
         <jre minVersion="1.8.0"/>
       </config>
     </launch4j>
+  </target>
+  <target name="clean">
+    <delete dir="build"/>
+    <delete file="cdoc.jar"/>
+    <delete file="cdoc.exe"/>
   </target>
 </project>
