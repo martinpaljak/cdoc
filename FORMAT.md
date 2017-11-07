@@ -1,10 +1,10 @@
 # CDOC 2.0 specification
-> DRAFT v0.3 23-09-2016, martin.paljak@eesti.ee
+> DRAFT v0.4 07-11-2017, martin.paljak@eesti.ee
 
 ## Introduction
 CDOC is a file format for storing encrypted data together with data for/about intended recipients.
 
-The main goals of CDOC v2.0 format over [CDOC v1.0](https://github.com/martinpaljak/idcrypt/wiki/CDOC-1.0) are resource-effectiveness when processing containers (less XML parsing), compatibility with ASiC containers (based on OpenDocument v1.2 ZIP packages) and general alignment with newer and future algorithms.
+The main goals of CDOC v2.0 format over [CDOC v1.0](https://github.com/martinpaljak/idcrypt/wiki/CDOC-1.0) (and CDOC-1.1) are resource-effectiveness when processing containers (less XML parsing), compatibility with ASiC containers (based on OpenDocument v1.2 ZIP packages) and general alignment with newer and future algorithms.
 
 It defines and clarifies the subset of relevant standards and provides guidelines and requirements for compliant implementations.
 
@@ -46,9 +46,10 @@ This scheme is comparable to ASiC-S ODF containers.
 ## ID-card profile
 
 The use with Estonian ID-card defaults to:
- 
+
+### RSA keys
 * RSA 2048 PKCS#1 v1.5 for transport key encryption
-* AES-GCM 256 for transport key
+* AES-GCM 256 for transport encryption
 * `META-INF/recipients.xml` snippet:
 
 ```
@@ -62,10 +63,52 @@ The use with Estonian ID-card defaults to:
 </EncryptedData>
 ```
 
+### ECC keys
+* P-384 (secp384r1) ECDH-ES with Concat KDF and AES KeyWrap for transport key encryption
+* AES-GCM 256 for transport encryption
+* `META-INF/recipients.xml` snippet:
+
+```
+<EncryptedData>
+    <EncryptionMethod Algorithm="http://www.w3.org/2009/xmlenc11#aes256-gcm"/>
+    <KeyInfo>
+        <EncryptedKey Recipient="...">
+            <EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#kw-aes256"/>
+            <KeyInfo>
+                <AgreementMethod Algorithm="http://www.w3.org/2009/xmlenc11#ECDH-ES">
+                    <KeyDerivationMethod Algorithm="http://www.w3.org/2009/xmlenc11#ConcatKDF">
+                        <ConcatKDFParams AlgorithmID="..." PartyUInfo="..." PartyVInfo="...">
+                            <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha384"/>
+                        </ConcatKDFParams>
+                    </KeyDerivationMethod>
+                    <OriginatorKeyInfo>
+                        <KeyValue>
+                            <ECKeyValue>
+                                <NamedCurve URI="urn:oid:1.3.132.0.34"/>
+                                <PublicKey>...</PublicKey>
+                            </ECKeyValue>
+                        </KeyValue>
+                    </OriginatorKeyInfo>
+                    <RecipientKeyInfo>
+                        <X509Data>
+                            <X509Certificate>...</ds:X509Certificate>
+                        </X509Data>
+                    </RecipientKeyInfo>
+                </AgreementMethod>
+            </KeyInfo>
+            <CipherData>
+                <CipherValue>...</CipherValue>
+            </CipherData>
+        </EncryptedKey>
+    </KeyInfo>
+    ...
+</EncryptedData>    
+```
+
 ## Samples of `META-INF/recipients.xml`
 
 ### Encryption of a single file with a pre-shared key
-`READMe.txt` is encrypted with AES-GCM 256 and the key itself is supposedly known to the receiver via ot of band means
+`READMe.txt` is encrypted with AES-GCM 256 and the key itself is supposedly known to the receiver via out of band means
 
 ```
 <EncryptedData xmlns='http://www.w3.org/2001/04/xmlenc#' MimeType="text/plain" />
