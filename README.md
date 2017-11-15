@@ -1,4 +1,5 @@
-# idcrypt &nbsp; [![Build Status](https://travis-ci.org/martinpaljak/idcrypt.svg?branch=master)](https://travis-ci.org/martinpaljak/idcrypt) [![Latest release](https://img.shields.io/github/release/martinpaljak/idcrypt.svg)](https://github.com/martinpaljak/idcrypt/releases/latest) [![GPL-3.0 licensed](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/martinpaljak/idcrypt/blob/master/LICENSE)
+# WIP, master not usable
+# idcrypt · [![Build Status](https://travis-ci.org/martinpaljak/idcrypt.svg?branch=master)](https://travis-ci.org/martinpaljak/idcrypt) [![Latest release](https://img.shields.io/github/release/martinpaljak/idcrypt/all.svg)](https://github.com/martinpaljak/idcrypt/releases/latest) [![GPL-3.0 licensed](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/martinpaljak/idcrypt/blob/master/LICENSE)
 
 CDOC command line utility - encrypt and decrypt files
 
@@ -7,11 +8,7 @@ CDOC command line utility - encrypt and decrypt files
 
         cdoc <file.cdoc>
 
- * Encrypt a file
-
-        cdoc <file>
-
- * Encrypt a file to yourself and Martin, with ID-code 38207162722
+ * Encrypt a file to Martin, with ID-code 38207162722
  
         cdoc <file> 38207162722
 
