@@ -1,4 +1,4 @@
-# WIP, master not usable
+# WIP, master may not be usable
 # idcrypt · [![Build Status](https://travis-ci.org/martinpaljak/idcrypt.svg?branch=master)](https://travis-ci.org/martinpaljak/idcrypt) [![Latest release](https://img.shields.io/github/release/martinpaljak/idcrypt/all.svg)](https://github.com/martinpaljak/idcrypt/releases/latest) [![GPL-3.0 licensed](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/martinpaljak/idcrypt/blob/master/LICENSE)
 
 CDOC command line utility - encrypt files
@@ -28,7 +28,7 @@ Please note that the identity of the receiver (who is capable of decrypting the 
 ## Security and compatibility when encrypting for Estonian ID card
 Estonian ID cards have either 2048 bit RSA keys or 384 bit elliptic curve keys. On-card keys are used to protect the AES data encryption key, also known as transport key.
 
-| Format   | Data encryption | Key encryption                   | Encapsulation | Comments           |
+| Format   | Data encryption | Transport key encryption         | Encapsulation | Comments           |
 |:---------|:----------------|:---------------------------------|:--------------|:-------------------|
 | CDOC 1.0 | AES-128 CBC     | RSA 2048 PKCS#1 v1.5             | XML (Base64)  | **DEPRECATED**     |
 | CDOC 1.1 | AES-256 GCM     | RSA 2048 PKCS#1 v1.5             | XML (Base64)  | Best compatibility |
