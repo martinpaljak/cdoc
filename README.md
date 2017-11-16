@@ -28,13 +28,13 @@ Please note that the identity of the receiver (who is capable of decrypting the 
 ## Security and compatibility when encrypting for Estonian ID card
 Estonian ID cards have either 2048 bit RSA keys or 384 bit elliptic curve keys. On-card keys are used to protect the AES data encryption key, also known as transport key.
 
-| Format   | Data encryption | Transport key encryption         | Encapsulation | Comments           |
-|:---------|:----------------|:---------------------------------|:--------------|:-------------------|
-| CDOC 1.0 | AES-128 CBC     | RSA 2048 PKCS#1 v1.5             | XML (Base64)  | **DEPRECATED**     |
-| CDOC 1.1 | AES-256 GCM     | RSA 2048 PKCS#1 v1.5             | XML (Base64)  | Best compatibility |
-| CDOC 1.1 | AES-256 GCM     | ECDH secp384r1 + AES-256 Key Wrap| XML (Base64)  | Best compatibility |
-| CDOC 2.0 | AES-256 GCM     | RSA 2048 PKCS#1 v1.5             | ODF (ZIP)     | Recommended        |
-| CDOC 2.0 | AES-256 GCM     | ECDH secp384r1 + AES-256 Key Wrap| ODF (ZIP)     | Recommended        |
+| Format   | Data encryption | Transport key encryption            | Wire format   | Comments           |
+|:---------|:----------------|:------------------------------------|:--------------|:-------------------|
+| CDOC 1.0 | AES-128 CBC     | RSA 2048 PKCS#1 v1.5                | XML (Base64)  | **DEPRECATED**     |
+| CDOC 1.1 | AES-256 GCM     | RSA 2048 PKCS#1 v1.5                | XML (Base64)  | Best compatibility |
+| CDOC 1.1 | AES-256 GCM     | ECDH-ES secp384r1 + AES-256 Key Wrap| XML (Base64)  | Best compatibility |
+| CDOC 2.0 | AES-256 GCM     | RSA 2048 PKCS#1 v1.5                | ODF (ZIP)     | Recommended        |
+| CDOC 2.0 | AES-256 GCM     | ECDH-ES secp384r1 + AES-256 Key Wrap| ODF (ZIP)     | Recommended        |
 
 At this moment (16 Nov 2017), the software available for Estonian ID-card from [installer.id.ee](https://installer.id.ee) supports only CDOC 1.0. Support for CDOC 1.1 is planned. Status of CDOC 2.0 plans is unknown.
 
