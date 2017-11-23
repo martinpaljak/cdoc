@@ -33,6 +33,10 @@ Substitute `cdoc` with `java -jar cdoc.jar` on Unix and `cdoc.exe` on Windows. U
  
         cdoc -key xxxxxx
         
+ * Use a plaintext PEM private key for decryption
+ 
+        cdoc -key <keyfile.pem>
+        
  * Enable privacy mode
  
         cdoc -privacy
