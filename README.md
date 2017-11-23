@@ -20,10 +20,32 @@ Substitute `cdoc` with `java -jar cdoc.jar` on Unix and `cdoc.exe` on Windows. U
 
  * Multiple input files mandate the use of `-o`
 
+## Utility functions
+ * List the recipients of a CDOC
+ 
+        cdoc -l <file.cdoc>
+ 
+ * Verify a CDOC (or do it during encryption for the XML)
+ 
+        cdoc -verify <file.cdoc>
+        
+ * Use a static AES transport key (hex) for encryption or decryption
+ 
+        cdoc -key xxxxxx
+        
+ * Enable privacy mode
+ 
+        cdoc -privacy
+  
+ 
 ## Privacy considerations
-Using an ID code means that the corresponding certificate must be queried from an online service. If you do not wish to leave traces of your encryption activities, DO NOT use ID code to automagically fetch the receiver certificate. Instead, ask for the certificate of the other party via some other channel and specify it with `-r <certificate.pem>`
+Using an ID code means that the corresponding public key must be queried from an online service. If you do not wish to leave traces of your encryption activities, DO NOT use ID code to automagically fetch the receiver certificate. Instead, ask for the certificate of the other party via some other channel and specify it with `-r <certificate.pem>`
 
-Please note that the identity of the receiver (who is capable of decrypting the file) is stored in plaintext within the container.
+Please note that the identity of receivers (certificates of those who are capable of decrypting the file) is stored in plaintext within the container, to support opening with the official software available from [installer.id.ee](https://installer.id.ee).
+
+When encrypting to CDOC 2.0, `-privacy` option can be used to disable online LDAP queries and to strip excessive metadata from the ZIP container (file creation times, certificates and names from the XML).
+
+NB! Please note that these privacy enhancements do not provide [plausible cryptographic denyability](https://en.wikipedia.org/wiki/Plausible_deniability) but just reduce the obvious metadata footprint.
 
 ## Security and compatibility when encrypting for Estonian ID card
 Estonian ID cards have either 2048 bit RSA keys or 384 bit elliptic curve keys. On-card keys are used to protect the AES data encryption key, also known as transport key.
