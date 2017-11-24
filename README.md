@@ -1,7 +1,7 @@
 # WIP, master may not be usable
-# idcrypt · [![Build Status](https://travis-ci.org/martinpaljak/idcrypt.svg?branch=master)](https://travis-ci.org/martinpaljak/idcrypt) [![Latest release](https://img.shields.io/github/release/martinpaljak/idcrypt/all.svg)](https://github.com/martinpaljak/idcrypt/releases/latest) [![GPL-3.0 licensed](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/martinpaljak/idcrypt/blob/master/LICENSE)
+# cdoc · [![Build Status](https://travis-ci.org/martinpaljak/cdoc.svg?branch=master)](https://travis-ci.org/martinpaljak/cdoc) [![Latest release](https://img.shields.io/github/release/martinpaljak/cdoc/all.svg)](https://github.com/martinpaljak/cdoc/releases/latest) [![GPL-3.0 licensed](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/martinpaljak/cdoc/blob/master/LICENSE)
 
-CDOC command line utility - encrypt files
+CDOC command line utility using [cdoc4j](https://github.com/martinpaljak/cdoc4j). Requires Java.
 
 ## Usage
 Substitute `cdoc` with `java -jar cdoc.jar` on Unix and `cdoc.exe` on Windows. Use `cdoc -help` to view all command line options.
@@ -14,7 +14,7 @@ Substitute `cdoc` with `java -jar cdoc.jar` on Unix and `cdoc.exe` on Windows. U
 
         cdoc file1.txt file2.txt 38207162722 -r other.pem -o secret.cdoc
  
- * ~~Decrypt a file~~ (currently broken)
+ * Decrypt a file
 
         cdoc <file.cdoc> # decrypted files are saved to current directory, override with -o
 
