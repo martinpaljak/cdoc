@@ -20,6 +20,7 @@ import org.esteid.EstEID.PersonalData;
 import org.esteid.IDCode;
 import org.esteid.sk.LDAP;
 
+import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.smartcardio.Card;
@@ -102,6 +103,13 @@ public class Tool {
 
 
         try {
+            // Test for unlimited crypto
+            if (Cipher.getMaxAllowedKeyLength("AES") == 128) {
+                System.out.println("WARNING: Unlimited crypto policy is NOT installed!");
+                System.out.println("Please read: https://github.com/martinpaljak/cdoc/wiki/UnlimitedCrypto");
+                System.exit(2);
+            }
+
             if (args.has(OPT_VERBOSE)) {
                 String level = "debug";
                 if (args.hasArgument(OPT_VERBOSE))
@@ -235,8 +243,6 @@ public class Tool {
 
                 // If all files are cdoc, decrypt them all
                 if (num_cdocs == files.size()) {
-                    System.out.println("Will try to decrypt all input files");
-
                     File output = new File(".");
                     if (args.has(OPT_OUT)) {
                         output = ((Path) args.valueOf(OPT_OUT)).toFile();
@@ -265,15 +271,16 @@ public class Tool {
                             Map<String, byte[]> decrypted = cdoc.getFiles(key);
                             for (Map.Entry<String, byte[]> e : decrypted.entrySet()) {
                                 File of = new File(output, e.getKey());
-                                System.out.println("Saving " + of);
+                                if (args.has(OPT_VERBOSE))
+                                    System.out.println("Saving " + of);
                                 Files.write(of.toPath(), e.getValue());
                             }
                         }
                     }
-
                     System.exit(1);
-                } else
+                } else {
                     fail("Need recipients, add with -r");
+                }
             } else {
                 // There are recipients, thus we encrypt
                 // Check if -o is present
@@ -281,16 +288,28 @@ public class Tool {
                     fail("need to use -o with multiple input files");
                 }
 
-                final File output;
-                if (files.size() == 1) {
-                    output = new File(files.get(0).getFileName() + ".cdoc");
-                } else {
+                File output = new File("."); // Default is CWD
+                if (args.has(OPT_OUT)) {
                     output = ((Path) args.valueOf(OPT_OUT)).toFile();
                 }
 
-                if (output.isFile() && output.exists() && !args.has(OPT_FORCE))
+                if (files.size() == 1) {
+                    // One file MAY use -o (which MAY be a folder)
+                    String fn = files.get(0).getFileName() + ".cdoc";
+                    if (output.isDirectory())
+                        output = new File(output, fn);
+                    else
+                        output = new File(fn);
+                } else {
+                    if (output.isDirectory())
+                        fail("Output must point to a file");
+                }
+
+                if (output.exists() && !args.has(OPT_FORCE))
                     fail("Output file " + output + " already exists");
-                System.out.println("Writing to " + output);
+
+                if (args.has(OPT_VERBOSE))
+                    System.out.println("Writing to " + output);
 
                 CDOCBuilder cdoc = CDOC.builder();
 
@@ -391,7 +410,6 @@ public class Tool {
                 Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
                 // Do DH.
                 byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
-                System.out.println("Secret: " + Hex.toHexString(secret));
                 return Decrypt.getKey(secret, er);
             }
         } catch (CardException e) {
