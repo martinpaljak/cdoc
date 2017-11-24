@@ -1,4 +1,4 @@
-# cdoc · [![Build Status](https://travis-ci.org/martinpaljak/cdoc.svg?branch=master)](https://travis-ci.org/martinpaljak/cdoc) [![Latest release](https://img.shields.io/github/release/martinpaljak/cdoc/all.svg)](https://github.com/martinpaljak/cdoc/releases/latest) [![GPL-3.0 licensed](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/martinpaljak/cdoc/blob/master/LICENSE)
+# cdoc · [![Build Status](https://travis-ci.org/martinpaljak/cdoc.svg?branch=master)](https://travis-ci.org/martinpaljak/cdoc) [![Latest release](https://img.shields.io/github/release/martinpaljak/cdoc/all.svg)](https://github.com/martinpaljak/cdoc/releases) [![GPL-3.0 licensed](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/martinpaljak/cdoc/blob/master/LICENSE)
 
 CDOC command line utility using [cdoc4j](https://github.com/martinpaljak/cdoc4j).
 
