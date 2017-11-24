@@ -10,7 +10,6 @@ import joptsimple.util.PathProperties;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.util.encoders.Hex;
 import org.cdoc4j.CDOC;
 import org.cdoc4j.CDOCBuilder;
 import org.cdoc4j.Decrypt;
@@ -32,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.PrivateKey;
 import java.security.cert.CertificateFactory;
@@ -54,6 +54,8 @@ public class Tool {
     private static final String OPT_PRIVACY = "privacy";
     private static final String OPT_LIST = "list";
 
+    private static Card card = null;
+    private static EstEID esteid = null;
 
     public static void main(String[] argv) throws Exception {
         // Prefer BouncyCastle
@@ -65,7 +67,7 @@ public class Tool {
         // Generic options
         parser.acceptsAll(Arrays.asList("V", OPT_VERSION), "Show version");
         parser.acceptsAll(Arrays.asList("?", "help"), "Show this help");
-        parser.acceptsAll(Arrays.asList("v", OPT_VERBOSE), "Be verbose").withOptionalArg();
+        parser.acceptsAll(Arrays.asList("v", OPT_VERBOSE), "Be verbose");
         parser.acceptsAll(Arrays.asList("f", OPT_FORCE), "Force operation, omitting checks");
         parser.acceptsAll(Arrays.asList("d", OPT_DECRYPT), "Decrypt a file").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         parser.acceptsAll(Arrays.asList("k", OPT_KEY), "Use key to decrypt").withRequiredArg();
@@ -266,7 +268,7 @@ public class Tool {
                                 if (args.has(OPT_VERBOSE))
                                     System.out.println("Using key: " + HexUtils.bin2hex(key.getEncoded()));
                             } else {
-                                key = getKey(cdoc.getRecipients().get(0)); // FIXME
+                                key = bruteforce(cdoc.getRecipients());
                             }
                             Map<String, byte[]> decrypted = cdoc.getFiles(key);
                             for (Map.Entry<String, byte[]> e : decrypted.entrySet()) {
@@ -384,6 +386,68 @@ public class Tool {
             // TODO: check for validity before
             return new SecretKeySpec(HexUtils.stringToBin(v), "AES");
         }
+    }
+
+    static SecretKey bruteforce(Collection<Recipient> recipients) {
+        Card card = null;
+        try {
+            CardTerminal ct = EstEID.get();
+            card = ct.connect("*");
+            card.beginExclusive();
+            EstEID eid = EstEID.getInstance(card.getBasicChannel());
+            String idcode = eid.getPersonalData(PersonalData.PERSONAL_ID);
+            System.out.println("You are " + idcode);
+            Console console = System.console();
+            char[] pinchars = console.readPassword("Enter PIN1: ");
+            if (pinchars == null) {
+                System.err.println("PIN is null :(");
+                System.exit(1);
+            }
+            X509Certificate authcert = eid.readAuthCert();
+            String pin = new String(pinchars);
+            for (Recipient r: recipients) {
+                // If recipient has a certificate, compare and fail early.
+                if (r.getCertificate() != null) {
+                    if (!r.getCertificate().getPublicKey().equals(authcert.getPublicKey())) {
+                        continue;
+                    }
+                }
+
+                // Otherwise bruteforce
+                try {
+                    if (r.getType() == Recipient.TYPE.RSA) {
+                        byte[] plaintext = eid.decrypt(r.getCryptogram(), pin);
+                        return new SecretKeySpec(plaintext, "AES");
+                    } else if (r.getType() == Recipient.TYPE.ECC) {
+                        Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
+                        // Do DH.
+                        byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
+                        return Decrypt.getKey(secret, er);
+                    }
+                } catch (InvalidKeyException e) {
+                    System.err.println("Trying next recipient ...");
+                    continue;
+                }
+            }
+        } catch (CardException e) {
+            e.printStackTrace();
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        } catch (EstEID.WrongPINException e) {
+            System.err.println("Incorrect pin: " + e.getMessage());
+        } catch (EstEID.EstEIDException e) {
+            e.printStackTrace();
+        } finally {
+            if (card != null) {
+                try {
+                    card.endExclusive();
+                    card.disconnect(true);
+                } catch (CardException e) {
+                    // Ignore
+                }
+            }
+        }
+        throw new IllegalStateException("Could not brute-decrypt key");
     }
 
     static SecretKey getKey(Recipient r) {
