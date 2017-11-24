@@ -1,7 +1,7 @@
 # WIP, master may not be usable
 # cdoc · [![Build Status](https://travis-ci.org/martinpaljak/cdoc.svg?branch=master)](https://travis-ci.org/martinpaljak/cdoc) [![Latest release](https://img.shields.io/github/release/martinpaljak/cdoc/all.svg)](https://github.com/martinpaljak/cdoc/releases/latest) [![GPL-3.0 licensed](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/martinpaljak/cdoc/blob/master/LICENSE)
 
-CDOC command line utility using [cdoc4j](https://github.com/martinpaljak/cdoc4j). Requires Java.
+CDOC command line utility using [cdoc4j](https://github.com/martinpaljak/cdoc4j). Requires Java 1.8.
 
 ## Usage
 Substitute `cdoc` with `java -jar cdoc.jar` on Unix and `cdoc.exe` on Windows. Use `cdoc -help` to view all command line options.
