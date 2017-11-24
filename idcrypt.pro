@@ -4,8 +4,11 @@
 -outjars cdoc.jar
 -dontobfuscate
 -dontoptimize
--keep public class org.esteid.cdoc.Tool {
+-keep public class org.cdoc4j.cli.Tool {
     public static void main(java.lang.String[]);
 }
+
+-keep class com.sun.jna.** { *; }
+-keep class jnasmartcardio.** { *; }
 -dontnote
 -dontwarn

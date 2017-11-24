@@ -21,7 +21,7 @@ addons:
     - libc6:i386
   coverity_scan:
     project:
-      name: martinpaljak/idcrypt
+      name: martinpaljak/cdoc
       description: idcrypt
     notification_email: martin@martinpaljak.net
     build_command: mvn clean compile
