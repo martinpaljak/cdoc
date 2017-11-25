@@ -454,7 +454,7 @@ public class Tool {
                     card.endExclusive();
                     card.disconnect(true);
                 } catch (CardException e) {
-                    // Ignore
+                    System.err.println("Could not disconnect: " + e.getMessage());
                 }
             }
         }
