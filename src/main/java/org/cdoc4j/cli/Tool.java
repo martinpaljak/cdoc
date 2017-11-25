@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2017 Martin Paljak <martin@martinpaljak.net>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.cdoc4j.cli;
 
 import apdu4j.HexUtils;
@@ -24,6 +40,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.smartcardio.Card;
 import javax.smartcardio.CardException;
+import javax.smartcardio.CardNotPresentException;
 import javax.smartcardio.CardTerminal;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -54,14 +71,13 @@ public class Tool {
     private static final String OPT_PRIVACY = "privacy";
     private static final String OPT_LIST = "list";
 
-    private static Card card = null;
-    private static EstEID esteid = null;
+
+    private static OptionSet args = null;
 
     public static void main(String[] argv) throws Exception {
         // Prefer BouncyCastle
         //Security.insertProviderAt(new BouncyCastleProvider(), 0);
 
-        OptionSet args = null;
         OptionParser parser = new OptionParser();
 
         // Generic options
@@ -77,7 +93,7 @@ public class Tool {
         parser.acceptsAll(Arrays.asList("p", OPT_PRIVACY), "Respect privacy");
         parser.acceptsAll(Arrays.asList("l", OPT_LIST), "List recipients").withRequiredArg();
         parser.acceptsAll(Arrays.asList("2", OPT_CDOCV2), "Create a CDOC 2.0 file");
-        parser.accepts(OPT_VALIDATE, "Verify validity of container or XML").withOptionalArg().describedAs(".cdoc");
+        parser.accepts(OPT_VALIDATE, "Validate container or XML").withOptionalArg().describedAs(".cdoc");
         parser.accepts(OPT_LEGACY, "Create a legacy CDOC 1.0 file");
 
         // Type safety
@@ -151,10 +167,8 @@ public class Tool {
             }
 
             // List issuers if asked
-            if (args.has(OPT_VERBOSE)) {
-                for (X509Certificate issuer : issuers) {
-                    System.out.println("Allowed issuer: " + issuer.getSubjectDN());
-                }
+            for (X509Certificate issuer : issuers) {
+                verbose("Allowed issuer: " + issuer.getSubjectDN());
             }
 
             // The total list of certificates to encrypt against.
@@ -199,12 +213,11 @@ public class Tool {
             for (String code : codes) {
                 Collection<X509Certificate> c = LDAP.fetch(code);
                 if (args.has(OPT_VERBOSE) || c.size() == 0)
-                    System.out.println("LDAP returned " + c.size() + " certificates for " + code);
+                    verbose("LDAP returned " + c.size() + " certificates for " + code);
                 if (c.size() > 0) {
                     // Always filter LDAP certs
                     Collection<X509Certificate> uc = filter_crypto_certs(c);
-                    if (args.has(OPT_VERBOSE))
-                        System.out.println(uc.size() + " certificates are usable for encryption");
+                    verbose(uc.size() + " certificates are usable for encryption");
                     recipients.addAll(uc);
                 }
             }
@@ -217,11 +230,8 @@ public class Tool {
             // Finally filter by allowed issuers
             recipients = new HashSet<>(filter_issuers(recipients, issuers, args.has(OPT_FORCE)));
 
-
-            if (args.has(OPT_VERBOSE)) {
-                for (X509Certificate c : recipients) {
-                    System.out.println("Encrypting for " + c.getSubjectDN());
-                }
+            for (X509Certificate c : recipients) {
+                verbose("Encrypting for " + c.getSubjectDN());
             }
 
             // TODO: Warn about weak RSA recipients
@@ -265,16 +275,16 @@ public class Tool {
                                 } else {
                                     throw new IllegalStateException("Unknown argument passed");
                                 }
-                                if (args.has(OPT_VERBOSE))
-                                    System.out.println("Using key: " + HexUtils.bin2hex(key.getEncoded()));
+                                verbose("Using key: " + HexUtils.bin2hex(key.getEncoded()));
                             } else {
                                 key = bruteforce(cdoc.getRecipients());
                             }
                             Map<String, byte[]> decrypted = cdoc.getFiles(key);
                             for (Map.Entry<String, byte[]> e : decrypted.entrySet()) {
                                 File of = new File(output, e.getKey());
-                                if (args.has(OPT_VERBOSE))
-                                    System.out.println("Saving " + of);
+                                if (of.exists() && !args.has(OPT_FORCE))
+                                    fail("Output file " + of + " already exists");
+                                verbose("Saving " + of);
                                 Files.write(of.toPath(), e.getValue());
                             }
                         }
@@ -310,8 +320,7 @@ public class Tool {
                 if (output.exists() && !args.has(OPT_FORCE))
                     fail("Output file " + output + " already exists");
 
-                if (args.has(OPT_VERBOSE))
-                    System.out.println("Writing to " + output);
+                verbose("Encrypting to " + output);
 
                 CDOCBuilder cdoc = CDOC.builder();
 
@@ -388,7 +397,7 @@ public class Tool {
         }
     }
 
-    static SecretKey bruteforce(Collection<Recipient> recipients) {
+    static SecretKey bruteforce(Collection<Recipient> recipients) throws IOException {
         Card card = null;
         try {
             CardTerminal ct = EstEID.get();
@@ -405,7 +414,7 @@ public class Tool {
             }
             X509Certificate authcert = eid.readAuthCert();
             String pin = new String(pinchars);
-            for (Recipient r: recipients) {
+            for (Recipient r : recipients) {
                 // If recipient has a certificate, compare and fail early.
                 if (r.getCertificate() != null) {
                     if (!r.getCertificate().getPublicKey().equals(authcert.getPublicKey())) {
@@ -425,18 +434,20 @@ public class Tool {
                         return Decrypt.getKey(secret, er);
                     }
                 } catch (InvalidKeyException e) {
-                    System.err.println("Trying next recipient ...");
+                    System.out.println("Did not decrypt, trying next recipient ...");
                     continue;
                 }
             }
-        } catch (CardException e) {
-            e.printStackTrace();
+            throw new IllegalStateException("Could not brute-decrypt key for any recipient");
+        } catch (CardNotPresentException e) {
+            throw new IllegalStateException("No card: " + e.getMessage(), e);
+        } catch (CardException | EstEID.EstEIDException e) {
+            throw new IOException("Card communication error: " + e.getMessage(), e);
         } catch (GeneralSecurityException e) {
-            e.printStackTrace();
+            throw new IllegalStateException("Could not brute-decrypt key: " + e.getMessage(), e);
         } catch (EstEID.WrongPINException e) {
             System.err.println("Incorrect pin: " + e.getMessage());
-        } catch (EstEID.EstEIDException e) {
-            e.printStackTrace();
+            throw new IllegalStateException("Incorrect PIN: " + e.getMessage(), e);
         } finally {
             if (card != null) {
                 try {
@@ -447,58 +458,10 @@ public class Tool {
                 }
             }
         }
-        throw new IllegalStateException("Could not brute-decrypt key");
     }
 
-    static SecretKey getKey(Recipient r) {
-        Card card = null;
-        // FIXME: pick the first one
-        try {
-            CardTerminal ct = EstEID.get();
-            card = ct.connect("*");
-            card.beginExclusive();
-            EstEID eid = EstEID.getInstance(card.getBasicChannel());
-            String idcode = eid.getPersonalData(PersonalData.PERSONAL_ID);
-            System.out.println("You are " + idcode);
-            Console console = System.console();
-            char[] pinchars = console.readPassword("Enter PIN1: ");
-            if (pinchars == null) {
-                System.err.println("PIN is null :(");
-                System.exit(1);
-            }
-            String pin = new String(pinchars);
-            if (r.getType() == Recipient.TYPE.RSA) {
-                byte[] plaintext = eid.decrypt(r.getCryptogram(), pin);
-                return new SecretKeySpec(plaintext, "AES");
-            } else if (r.getType() == Recipient.TYPE.ECC) {
-                Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
-                // Do DH.
-                byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
-                return Decrypt.getKey(secret, er);
-            }
-        } catch (CardException e) {
-            e.printStackTrace();
-        } catch (GeneralSecurityException e) {
-            e.printStackTrace();
-        } catch (EstEID.WrongPINException e) {
-            System.err.println("Incorrect pin: " + e.getMessage());
-        } catch (EstEID.EstEIDException e) {
-            e.printStackTrace();
-        } finally {
-            if (card != null) {
-                try {
-                    card.endExclusive();
-                    card.disconnect(true);
-                } catch (CardException e) {
-                    // Ignore
-                }
-            }
-        }
-        System.exit(1);
-        return null;
-    }
 
-    public static String getVersion() {
+    static String getVersion() {
         String version = "unknown-development";
         try (InputStream versionfile = Tool.class.getResourceAsStream("pro_version.txt")) {
             if (versionfile != null) {
@@ -514,10 +477,8 @@ public class Tool {
 
     /**
      * Return a list of hard-coded X509 certificates
-     *
-     * @return
      */
-    public static Set<X509Certificate> get_builtin_issuers() {
+    static Set<X509Certificate> get_builtin_issuers() {
         Set<X509Certificate> s = new HashSet<>();
         try {
             CertificateFactory fact = CertificateFactory.getInstance("X.509");
@@ -573,7 +534,13 @@ public class Tool {
         return result;
     }
 
-    private static void fail(String message) {
+
+    static void verbose(String s) {
+        if (args.has(OPT_VERBOSE))
+            System.out.println(s);
+    }
+
+    static void fail(String message) {
         System.err.println("Error: " + message);
         System.exit(1);
     }
