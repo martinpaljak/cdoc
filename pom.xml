@@ -66,10 +66,8 @@
                     <debug>true</debug>
                     <debuglevel>lines,vars,source</debuglevel>
                     <compilerArgs>
-                        <arg>-XDenableSunApiLintControl</arg>
                         <arg>-Xlint:deprecation</arg>
                         <arg>-Xlint:unchecked</arg>
-                        <arg>-Xlint:sunapi</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
