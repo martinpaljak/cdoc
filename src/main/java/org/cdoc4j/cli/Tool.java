@@ -91,7 +91,7 @@ public class Tool {
         parser.acceptsAll(Arrays.asList("e", OPT_ENCRYPT), "Encrypt a file").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         parser.acceptsAll(Arrays.asList("i", OPT_ISSUER), "Allowed issuer certificate").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         parser.acceptsAll(Arrays.asList("p", OPT_PRIVACY), "Respect privacy");
-        parser.acceptsAll(Arrays.asList("l", OPT_LIST), "List recipients").withRequiredArg();
+        parser.acceptsAll(Arrays.asList("l", OPT_LIST), "List recipients");
         parser.acceptsAll(Arrays.asList("2", OPT_CDOCV2), "Create a CDOC 2.0 file");
         parser.accepts(OPT_VALIDATE, "Validate container or XML").withOptionalArg().describedAs(".cdoc");
         parser.accepts(OPT_LEGACY, "Create a legacy CDOC 1.0 file");
@@ -139,18 +139,6 @@ public class Tool {
                 System.out.println("# CDOC " + getVersion() + " with cdoc4j/" + CDOC.getLibraryVersion());
             }
 
-            // One-shot ops
-            if (args.has(OPT_LIST)) {
-                File f = new File((String) args.valueOf(OPT_LIST));
-                CDOC c = CDOC.open(f);
-                System.out.println(c.getVersion() + " with " + c.getAlgorithm());
-                for (Recipient r : c.getRecipients()) {
-                    System.out.println("Encrypted for: " + (r.getName() == null ? "undisclosed recipient" : r.getName()) + " (" + r.getType() + ")");
-                }
-                System.exit(0);
-            }
-
-
             // Add allowed issuers
             HashSet<X509Certificate> issuers = new HashSet<>();
 
@@ -196,6 +184,18 @@ public class Tool {
                     codes.add(arg);
                 } else {
                     fail(arg + " is not a file nor ID-code!");
+                }
+            }
+
+            // One-shot ops
+            if (args.has(OPT_LIST)) {
+                for (Path p : files) {
+                    File f = p.toFile();
+                    CDOC c = CDOC.open(f);
+                    System.out.println(f.getName() + ": " + c.getVersion() + " with " + c.getAlgorithm());
+                    for (Recipient r : c.getRecipients()) {
+                        System.out.println("Encrypted for: " + (r.getName() == null ? "undisclosed recipient" : r.getName()) + " (" + r.getType() + ")");
+                    }
                 }
             }
 
@@ -287,6 +287,9 @@ public class Tool {
                                 verbose("Saving " + of);
                                 Files.write(of.toPath(), e.getValue());
                             }
+                        } catch (CardNotPresentException e) {
+                            if (!args.has(OPT_LIST))
+                                fail("Could not decrypt file: " + e.getMessage());
                         }
                     }
                     System.exit(1);
@@ -326,9 +329,9 @@ public class Tool {
 
                 // Version
                 if (args.has(OPT_CDOCV2)) {
-                    cdoc.setVersion(CDOC.VERSION.CDOC_V2_0);
+                    cdoc.setVersion(CDOC.Version.CDOC_V2_0);
                 } else if (args.has(OPT_LEGACY)) {
-                    cdoc.setVersion(CDOC.VERSION.CDOC_V1_0);
+                    cdoc.setVersion(CDOC.Version.CDOC_V1_0);
                 }
 
                 // Key
@@ -397,7 +400,7 @@ public class Tool {
         }
     }
 
-    static SecretKey bruteforce(Collection<Recipient> recipients) throws IOException {
+    static SecretKey bruteforce(Collection<Recipient> recipients) throws CardNotPresentException, IOException {
         Card card = null;
         try {
             CardTerminal ct = EstEID.get();
@@ -439,8 +442,6 @@ public class Tool {
                 }
             }
             throw new IllegalStateException("Could not brute-decrypt key for any recipient");
-        } catch (CardNotPresentException e) {
-            throw new IllegalStateException("No card: " + e.getMessage(), e);
         } catch (CardException | EstEID.EstEIDException e) {
             throw new IOException("Card communication error: " + e.getMessage(), e);
         } catch (GeneralSecurityException e) {
@@ -459,7 +460,6 @@ public class Tool {
             }
         }
     }
-
 
     static String getVersion() {
         String version = "unknown-development";
@@ -506,7 +506,6 @@ public class Tool {
         return null;
     }
 
-
     // XXX: This is highly Estonia specific
     static Collection<X509Certificate> filter_crypto_certs(Collection<X509Certificate> certs) {
         ArrayList<X509Certificate> result = new ArrayList<>();
@@ -533,7 +532,6 @@ public class Tool {
         }
         return result;
     }
-
 
     static void verbose(String s) {
         if (args.has(OPT_VERBOSE))
