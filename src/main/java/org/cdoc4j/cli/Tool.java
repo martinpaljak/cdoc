@@ -31,17 +31,14 @@ import org.cdoc4j.CDOCBuilder;
 import org.cdoc4j.Decrypt;
 import org.cdoc4j.Recipient;
 import org.esteid.EstEID;
-import org.esteid.EstEID.PersonalData;
 import org.esteid.IDCode;
 import org.esteid.sk.LDAP;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.smartcardio.Card;
 import javax.smartcardio.CardException;
 import javax.smartcardio.CardNotPresentException;
-import javax.smartcardio.CardTerminal;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -57,11 +54,9 @@ import java.util.*;
 
 public class Tool {
     private static final String OPT_VERSION = "version";
-    private static final String OPT_DECRYPT = "decrypt";
     private static final String OPT_KEY = "key";
     private static final String OPT_CDOCV2 = "cdoc2";
     private static final String OPT_OUT = "out";
-    private static final String OPT_ENCRYPT = "encrypt";
     private static final String OPT_LEGACY = "legacy";
     private static final String OPT_VERBOSE = "verbose";
     private static final String OPT_FORCE = "force";
@@ -85,15 +80,13 @@ public class Tool {
         parser.acceptsAll(Arrays.asList("?", "help"), "Show this help");
         parser.acceptsAll(Arrays.asList("v", OPT_VERBOSE), "Be verbose");
         parser.acceptsAll(Arrays.asList("f", OPT_FORCE), "Force operation, omitting checks");
-        parser.acceptsAll(Arrays.asList("d", OPT_DECRYPT), "Decrypt a file").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         parser.acceptsAll(Arrays.asList("k", OPT_KEY), "Use key to decrypt").withRequiredArg();
         parser.acceptsAll(Arrays.asList("o", OPT_OUT), "Save output to").withRequiredArg().withValuesConvertedBy(new PathConverter());
-        parser.acceptsAll(Arrays.asList("e", OPT_ENCRYPT), "Encrypt a file").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         parser.acceptsAll(Arrays.asList("i", OPT_ISSUER), "Allowed issuer certificate").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         parser.acceptsAll(Arrays.asList("p", OPT_PRIVACY), "Respect privacy");
         parser.acceptsAll(Arrays.asList("l", OPT_LIST), "List recipients");
         parser.acceptsAll(Arrays.asList("2", OPT_CDOCV2), "Create a CDOC 2.0 file");
-        parser.accepts(OPT_VALIDATE, "Validate container or XML").withOptionalArg().describedAs(".cdoc");
+        parser.accepts(OPT_VALIDATE, "Validate container or XML").withOptionalArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         parser.accepts(OPT_LEGACY, "Create a legacy CDOC 1.0 file");
 
         // Type safety
@@ -200,7 +193,7 @@ public class Tool {
             }
 
             // Minimal
-            if (files.size() == 0) {
+            if (files.size() == 0 && !args.has(OPT_VERSION)) {
                 fail("Need files to encrypt or decrypt!");
             }
 
@@ -230,10 +223,6 @@ public class Tool {
             // Finally filter by allowed issuers
             recipients = new HashSet<>(filter_issuers(recipients, issuers, args.has(OPT_FORCE)));
 
-            for (X509Certificate c : recipients) {
-                verbose("Encrypting for " + c.getSubjectDN());
-            }
-
             // TODO: Warn about weak RSA recipients
             for (X509Certificate r : recipients) {
 //            if (BrokenKey.isAffected(r)) {
@@ -249,81 +238,89 @@ public class Tool {
                 }
             }
 
+            for (X509Certificate c : recipients) {
+                verbose("Encrypting for " + c.getSubjectDN());
+            }
+
             // DWIM
-            // No recipients
-            if (recipients.size() == 0) {
-
+            if (recipients.size() == 0 && num_cdocs == files.size()) {
                 // If all files are cdoc, decrypt them all
-                if (num_cdocs == files.size()) {
-                    File output = new File(".");
-                    if (args.has(OPT_OUT)) {
-                        output = ((Path) args.valueOf(OPT_OUT)).toFile();
-                    }
-
-                    if (!output.isDirectory()) {
-                        fail("-o must point to a directory, when decrypting");
-                    }
-                    for (Path p : files) {
-                        try (CDOC cdoc = CDOC.open(p.toFile())) {
-                            final SecretKey key;
-                            if (args.has(OPT_KEY)) {
-                                Key dwim = dwimKey((String) args.valueOf(OPT_KEY));
-                                if (dwim instanceof SecretKey) {
-                                    key = (SecretKey) dwim;
-                                } else if (dwim instanceof PrivateKey) {
-                                    key = Decrypt.getKey((PrivateKey) dwim, cdoc.getRecipients().get(0)); // FIXME
-                                } else {
-                                    throw new IllegalStateException("Unknown argument passed");
-                                }
-                                verbose("Using key: " + HexUtils.bin2hex(key.getEncoded()));
-                            } else {
-                                key = bruteforce(cdoc.getRecipients());
-                            }
-                            Map<String, byte[]> decrypted = cdoc.getFiles(key);
-                            for (Map.Entry<String, byte[]> e : decrypted.entrySet()) {
-                                File of = new File(output, e.getKey());
-                                if (of.exists() && !args.has(OPT_FORCE))
-                                    fail("Output file " + of + " already exists");
-                                verbose("Saving " + of);
-                                Files.write(of.toPath(), e.getValue());
-                            }
-                        } catch (CardNotPresentException e) {
-                            if (!args.has(OPT_LIST))
-                                fail("Could not decrypt file: " + e.getMessage());
-                        }
-                    }
-                    System.exit(1);
-                } else {
-                    fail("Need recipients, add with -r");
-                }
-            } else {
-                // There are recipients, thus we encrypt
-                // Check if -o is present
-                if (files.size() > 1 && !args.has(OPT_OUT)) {
-                    fail("need to use -o with multiple input files");
-                }
-
-                File output = new File("."); // Default is CWD
+                File output = new File(".");
                 if (args.has(OPT_OUT)) {
                     output = ((Path) args.valueOf(OPT_OUT)).toFile();
                 }
 
-                if (files.size() == 1) {
-                    // One file MAY use -o (which MAY be a folder)
-                    String fn = files.get(0).getFileName() + ".cdoc";
-                    if (output.isDirectory())
-                        output = new File(output, fn);
-                    else
-                        output = new File(fn);
-                } else {
-                    if (output.isDirectory())
-                        fail("Output must point to a file");
+                if (!output.isDirectory()) {
+                    fail("-o must point to a directory, when decrypting");
                 }
 
-                if (output.exists() && !args.has(OPT_FORCE))
-                    fail("Output file " + output + " already exists");
+                for (Path p : files) {
+                    try (CDOC cdoc = CDOC.open(p.toFile())) {
+                        final SecretKey key;
+                        if (args.has(OPT_KEY)) {
+                            Key dwim = dwimKey((String) args.valueOf(OPT_KEY));
+                            if (dwim instanceof SecretKey) {
+                                key = (SecretKey) dwim;
+                            } else if (dwim instanceof PrivateKey) {
+                                key = Decrypt.getKey((PrivateKey) dwim, cdoc.getRecipients().get(0)); // FIXME
+                            } else {
+                                throw new IllegalStateException("Unknown argument passed: " + args.valueOf(OPT_KEY));
+                            }
+                            verbose("Using key: " + HexUtils.bin2hex(key.getEncoded()));
+                        } else {
+                            key = bruteforce(cdoc.getRecipients());
+                        }
+                        Map<String, byte[]> decrypted = cdoc.getFiles(key);
+                        for (Map.Entry<String, byte[]> e : decrypted.entrySet()) {
+                            File of = new File(output, e.getKey());
+                            if (of.exists() && !args.has(OPT_FORCE))
+                                fail("Output file " + of + " already exists");
+                            verbose("Saving " + of);
+                            Files.write(of.toPath(), e.getValue());
+                        }
+                    } catch (CardNotPresentException e) {
+                        // Do not fail if decryption is not possible
+                        if (!args.has(OPT_LIST))
+                            fail("Could not decrypt file: " + e.getMessage());
+                    }
+                }
+                System.exit(0);
+            } else {
+                // There are recipients (or a key), thus we encrypt
+                if (recipients.size() == 0) {
+                    if (!args.has(OPT_CDOCV2)) {
+                        fail("must specify recipients for encryption");
+                    } else {
+                        if (!args.has(OPT_KEY))
+                            fail("must specify either recipients or a statid pre-shared key for encryption");
+                    }
+                }
+                // Check if -o is present
+                final File outfile;
+                if (files.size() > 1) {
+                    if (!args.has(OPT_OUT))
+                        fail("need to use -o with multiple input files");
+                    File o = ((Path) args.valueOf(OPT_OUT)).toFile();
+                    if (o.isDirectory())
+                        fail("can't use a directory as output, when there are multiple input files");
+                    outfile = o;
+                } else {
+                    // Single file
+                    String fn = args.has(OPT_PRIVACY) ? "encrypted.cdoc" : files.get(0).getFileName() + ".cdoc";
+                    if (args.has(OPT_OUT)) {
+                        File o = ((Path) args.valueOf(OPT_OUT)).toFile();
+                        if (o.isDirectory()) {
+                            outfile = new File(o, fn);
+                        } else {
+                            outfile = o;
+                        }
+                    } else {
+                        outfile = new File(fn);
+                    }
+                }
 
-                verbose("Encrypting to " + output);
+                if (outfile.exists() && !args.has(OPT_FORCE))
+                    fail("Output file " + outfile + " already exists");
 
                 CDOCBuilder cdoc = CDOC.builder();
 
@@ -336,9 +333,13 @@ public class Tool {
 
                 // Key
                 if (args.has(OPT_KEY)) {
-                    byte[] key = HexUtils.stringToBin((String) args.valueOf(OPT_KEY));
-                    System.out.println("Using static key: " + HexUtils.bin2hex(key));
-                    cdoc.withTransportKey(key);
+                    Key key = dwimKey((String) args.valueOf(OPT_KEY));
+                    if (key instanceof SecretKey) {
+                        System.out.println("Using static key: " + HexUtils.bin2hex(key.getEncoded()));
+                        cdoc.withTransportKey((SecretKey) key);
+                    } else {
+                        fail("Must specify a secret key with -key when encrypting");
+                    }
                 }
 
                 // Recipients
@@ -362,18 +363,18 @@ public class Tool {
                 }
 
                 // Shoot
-                cdoc.buildToStream(Files.newOutputStream(output.toPath()));
+                cdoc.buildToStream(Files.newOutputStream(outfile.toPath()));
+                System.out.println("Saved encrypted file to " + outfile);
                 System.exit(0);
             }
+        } catch (CardException e) {
+            fail("Card Error: " + e.getMessage());
         } catch (IOException e) {
-            System.err.println("I/O Error: " + e.getMessage());
-            System.exit(1);
+            fail("I/O Error: " + e.getMessage());
         } catch (IllegalStateException e) {
-            System.err.println("Can not run: " + e.getMessage());
-            System.exit(1);
+            fail("Can not run: " + e.getMessage());
         } catch (IllegalArgumentException e) {
-            System.err.println("Illegal argument: " + e.getMessage());
-            System.exit(1);
+            fail("Illegal argument: " + e.getMessage());
         }
     }
 
@@ -400,65 +401,106 @@ public class Tool {
         }
     }
 
-    static SecretKey bruteforce(Collection<Recipient> recipients) throws CardNotPresentException, IOException {
-        Card card = null;
-        try {
-            CardTerminal ct = EstEID.get();
-            card = ct.connect("*");
-            card.beginExclusive();
-            EstEID eid = EstEID.getInstance(card.getBasicChannel());
-            String idcode = eid.getPersonalData(PersonalData.PERSONAL_ID);
-            System.out.println("You are " + idcode);
-            Console console = System.console();
-            char[] pinchars = console.readPassword("Enter PIN1: ");
-            if (pinchars == null) {
-                System.err.println("PIN is null :(");
-                System.exit(1);
-            }
-            X509Certificate authcert = eid.readAuthCert();
-            String pin = new String(pinchars);
-            for (Recipient r : recipients) {
-                // If recipient has a certificate, compare and fail early.
-                if (r.getCertificate() != null) {
-                    if (!r.getCertificate().getPublicKey().equals(authcert.getPublicKey())) {
-                        continue;
-                    }
-                }
-
-                // Otherwise bruteforce
-                try {
-                    if (r.getType() == Recipient.TYPE.RSA) {
-                        byte[] plaintext = eid.decrypt(r.getCryptogram(), pin);
-                        return new SecretKeySpec(plaintext, "AES");
-                    } else if (r.getType() == Recipient.TYPE.ECC) {
-                        Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
-                        // Do DH.
-                        byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
-                        return Decrypt.getKey(secret, er);
-                    }
-                } catch (InvalidKeyException e) {
-                    System.out.println("Did not decrypt, trying next recipient ...");
-                    continue;
-                }
-            }
-            throw new IllegalStateException("Could not brute-decrypt key for any recipient");
-        } catch (CardException | EstEID.EstEIDException e) {
-            throw new IOException("Card communication error: " + e.getMessage(), e);
-        } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("Could not brute-decrypt key: " + e.getMessage(), e);
-        } catch (EstEID.WrongPINException e) {
-            System.err.println("Incorrect pin: " + e.getMessage());
-            throw new IllegalStateException("Incorrect PIN: " + e.getMessage(), e);
-        } finally {
-            if (card != null) {
-                try {
-                    card.endExclusive();
-                    card.disconnect(true);
-                } catch (CardException e) {
-                    System.err.println("Could not disconnect: " + e.getMessage());
-                }
+    static SecretKey bruteforce(Collection<Recipient> recipients) throws CardException {
+        // If all recipients have a certificate, be smart with locating the right card
+        boolean nocert = false;
+        HashSet<X509Certificate> certs = new HashSet<>();
+        for (Recipient r : recipients) {
+            if (r.getCertificate() == null) {
+                nocert = true;
+            } else {
+                certs.add(r.getCertificate());
             }
         }
+
+        try {
+            if (!nocert) {
+                try (EstEID eid = EstEID.locateOneOf(certs)) {
+                    if (eid == null)
+                        throw new CardNotPresentException("Did not find a card");
+                    X509Certificate c = eid.getAuthCert();
+                    System.out.println("You are " + eid);
+                    Console console = System.console();
+                    char[] pinchars = console.readPassword("Enter PIN1: ");
+                    if (pinchars == null) {
+                        fail("PIN is null :(");
+                    }
+                    String pin = new String(pinchars);
+                    // Locate matching recipient
+                    for (Recipient r : recipients) {
+                        if (r.getCertificate().equals(c)) {
+                            if (r.getType() == Recipient.TYPE.RSA) {
+                                byte[] plaintext = eid.decrypt(r.getCryptogram(), pin);
+                                return new SecretKeySpec(plaintext, "AES");
+                            } else if (r.getType() == Recipient.TYPE.EC) {
+                                Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
+                                byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
+                                return Decrypt.getKey(secret, er);
+                            }
+                        }
+                    }
+                }
+            } else {
+                try (EstEID eid = EstEID.anyCard()) {
+                    if (eid == null)
+                        throw new CardNotPresentException("Did not find a card");
+                    System.out.println("You are " + eid);
+                    X509Certificate authcert = eid.getAuthCert();
+
+                    // Check if we have a possibility to successfully decrypt
+                    boolean canDecrypt = false;
+                    for (Recipient r : recipients) {
+                        if (r.getType() == Recipient.TYPE.RSA && authcert.getPublicKey().getAlgorithm().equals("RSA")) {
+                            canDecrypt = true;
+                            break;
+                        }
+                        if (r.getType() == Recipient.TYPE.EC && authcert.getPublicKey().getAlgorithm().equals("EC")) {
+                            canDecrypt = true;
+                            break;
+                        }
+                    }
+                    if (!canDecrypt) {
+                        fail("Can't decrypt: chosen card has " + authcert.getPublicKey().getAlgorithm() + " keys, but none of the recipients has the same");
+                    }
+
+                    Console console = System.console();
+                    char[] pinchars = console.readPassword("Enter PIN1: ");
+                    if (pinchars == null) {
+                        System.err.println("PIN is null :(");
+                        System.exit(1);
+                    }
+                    String pin = new String(pinchars);
+                    for (Recipient r : recipients) {
+                        // If recipient has a certificate, compare and fail early.
+                        if (r.getCertificate() != null) {
+                            if (!r.getCertificate().getPublicKey().equals(authcert.getPublicKey())) {
+                                continue;
+                            }
+                        }
+                        // Otherwise bruteforce
+                        try {
+                            if (r.getType() == Recipient.TYPE.RSA && authcert.getPublicKey().getAlgorithm().equals("RSA")) {
+                                byte[] plaintext = eid.decrypt(r.getCryptogram(), pin);
+                                return new SecretKeySpec(plaintext, "AES");
+                            } else if (r.getType() == Recipient.TYPE.EC && authcert.getPublicKey().getAlgorithm().equals("EC")) {
+                                Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
+                                byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
+                                return Decrypt.getKey(secret, er);
+                            } else {
+                                System.out.println("Algorithms do not match, trying next recipient ...");
+                            }
+                        } catch (InvalidKeyException e) {
+                            System.out.println("Did not decrypt, trying next recipient ...");
+                            continue;
+                        }
+                    }
+                    throw new IllegalStateException("Could not brute-decrypt key for any recipient");
+                }
+            }
+        } catch (CardException | EstEID.EstEIDException | GeneralSecurityException | EstEID.WrongPINException e) {
+            throw new CardException("Card communication error: " + e.getMessage());
+        }
+        throw new IllegalStateException("Could not decrypt a key for any recipient");
     }
 
     static String getVersion() {
