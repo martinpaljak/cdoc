@@ -39,7 +39,7 @@
         <dependency>
             <groupId>com.github.martinpaljak</groupId>
             <artifactId>cdoc4j</artifactId>
-            <version>17.11.26.1</version>
+            <version>17.11.27</version>
         </dependency>
         <dependency>
             <groupId>com.github.martinpaljak</groupId>
