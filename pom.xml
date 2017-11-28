@@ -39,7 +39,7 @@
         <dependency>
             <groupId>com.github.martinpaljak</groupId>
             <artifactId>cdoc4j</artifactId>
-            <version>17.11.27</version>
+            <version>17.11.27.1</version>
         </dependency>
         <dependency>
             <groupId>com.github.martinpaljak</groupId>
@@ -92,7 +92,6 @@
                         <argument>describe</argument>
                         <argument>--tags</argument>
                         <argument>--always</argument>
-                        <argument>--long</argument>
                         <argument>--dirty</argument>
                     </arguments>
                 </configuration>

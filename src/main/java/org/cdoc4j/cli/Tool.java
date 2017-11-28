@@ -26,10 +26,7 @@ import joptsimple.util.PathProperties;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.cdoc4j.CDOC;
-import org.cdoc4j.CDOCBuilder;
-import org.cdoc4j.Decrypt;
-import org.cdoc4j.Recipient;
+import org.cdoc4j.*;
 import org.esteid.EstEID;
 import org.esteid.IDCode;
 import org.esteid.sk.LDAP;
@@ -297,13 +294,13 @@ public class Tool {
                             if (dwim instanceof SecretKey) {
                                 key = (SecretKey) dwim;
                             } else if (dwim instanceof PrivateKey) {
-                                key = Decrypt.getKey((PrivateKey) dwim, cdoc.getRecipients().get(0)); // FIXME
+                                key = Decrypt.getKey((PrivateKey) dwim, cdoc.getRecipients().get(0), cdoc.getAlgorithm()); // FIXME
                             } else {
                                 throw new IllegalStateException("Unknown argument passed: " + args.valueOf(OPT_KEY));
                             }
                             verbose("Using key: " + HexUtils.bin2hex(key.getEncoded()));
                         } else {
-                            key = bruteforce(cdoc.getRecipients(), args.has(OPT_DEBUG));
+                            key = bruteforce(cdoc.getRecipients(), args.has(OPT_DEBUG), cdoc.getAlgorithm());
                         }
                         Map<String, byte[]> decrypted = cdoc.getFiles(key);
                         for (Map.Entry<String, byte[]> e : decrypted.entrySet()) {
@@ -436,7 +433,7 @@ public class Tool {
         }
     }
 
-    static SecretKey bruteforce(Collection<Recipient> recipients, boolean debug) throws CardException {
+    static SecretKey bruteforce(Collection<Recipient> recipients, boolean debug, EncryptionMethod em) throws CardException {
         // If all recipients have a certificate, be smart with locating the right card
         boolean nocert = false;
         HashSet<X509Certificate> certs = new HashSet<>();
@@ -470,7 +467,7 @@ public class Tool {
                             } else if (r.getType() == Recipient.TYPE.EC) {
                                 Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
                                 byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
-                                return Decrypt.getKey(secret, er);
+                                return Decrypt.getKey(secret, er, em);
                             }
                         }
                     }
@@ -520,7 +517,7 @@ public class Tool {
                             } else if (r.getType() == Recipient.TYPE.EC && authcert.getPublicKey().getAlgorithm().equals("EC")) {
                                 Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
                                 byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
-                                return Decrypt.getKey(secret, er);
+                                return Decrypt.getKey(secret, er, em);
                             } else {
                                 System.out.println("Algorithms do not match, trying next recipient ...");
                             }
