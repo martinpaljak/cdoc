@@ -58,6 +58,7 @@ public class Tool {
     private static final String OPT_CDOCV2 = "cdoc2";
     private static final String OPT_OUT = "out";
     private static final String OPT_LEGACY = "legacy";
+    private static final String OPT_DEBUG = "debug";
     private static final String OPT_VERBOSE = "verbose";
     private static final String OPT_FORCE = "force";
     private static final String OPT_ISSUER = "issuer";
@@ -66,27 +67,24 @@ public class Tool {
     private static final String OPT_PRIVACY = "privacy";
     private static final String OPT_LIST = "list";
 
-
     private static OptionSet args = null;
 
     public static void main(String[] argv) throws Exception {
-        // Prefer BouncyCastle
-        //Security.insertProviderAt(new BouncyCastleProvider(), 0);
-
         OptionParser parser = new OptionParser();
 
         // Generic options
         parser.acceptsAll(Arrays.asList("V", OPT_VERSION), "Show version");
         parser.acceptsAll(Arrays.asList("?", "help"), "Show this help");
+        parser.acceptsAll(Arrays.asList("D", OPT_DEBUG), "Enable low-level debugging");
         parser.acceptsAll(Arrays.asList("v", OPT_VERBOSE), "Be verbose");
-        parser.acceptsAll(Arrays.asList("f", OPT_FORCE), "Force operation, omitting checks");
+        parser.acceptsAll(Arrays.asList("f", OPT_FORCE), "Force operations, omitting checks");
         parser.acceptsAll(Arrays.asList("k", OPT_KEY), "Use key to decrypt").withRequiredArg();
         parser.acceptsAll(Arrays.asList("o", OPT_OUT), "Save output to").withRequiredArg().withValuesConvertedBy(new PathConverter());
         parser.acceptsAll(Arrays.asList("i", OPT_ISSUER), "Allowed issuer certificate").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         parser.acceptsAll(Arrays.asList("p", OPT_PRIVACY), "Respect privacy");
         parser.acceptsAll(Arrays.asList("l", OPT_LIST), "List recipients");
         parser.acceptsAll(Arrays.asList("2", OPT_CDOCV2), "Create a CDOC 2.0 file");
-        parser.accepts(OPT_VALIDATE, "Validate container or XML").withOptionalArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
+        parser.acceptsAll(Arrays.asList("X", OPT_VALIDATE), "Validate generated XML");
         parser.accepts(OPT_LEGACY, "Create a legacy CDOC 1.0 file");
 
         // Type safety
@@ -122,14 +120,16 @@ public class Tool {
             }
 
             if (args.has(OPT_VERBOSE)) {
-                String level = "debug";
-                if (args.hasArgument(OPT_VERBOSE))
-                    level = (String) args.valueOf(OPT_VERBOSE);
-                System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", level);
+                System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "info");
+            }
+
+            if (args.has(OPT_DEBUG)) {
+                System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "trace");
             }
 
             if (args.has(OPT_VERSION)) {
                 System.out.println("# CDOC " + getVersion() + " with cdoc4j/" + CDOC.getLibraryVersion());
+                System.out.println("# " + System.getProperty("java.version") + " by " + System.getProperty("java.vendor"));
             }
 
             // Add allowed issuers
@@ -212,6 +212,12 @@ public class Tool {
                     Collection<X509Certificate> uc = filter_crypto_certs(c);
                     verbose(uc.size() + " certificates are usable for encryption");
                     recipients.addAll(uc);
+                } else {
+                    if (!args.has(OPT_FORCE)) {
+                        fail("LDAP returned no certificates for " + code);
+                    } else {
+                        System.err.println("Removing " + code + " from recipients, no certificates");
+                    }
                 }
             }
 
@@ -268,7 +274,7 @@ public class Tool {
                             }
                             verbose("Using key: " + HexUtils.bin2hex(key.getEncoded()));
                         } else {
-                            key = bruteforce(cdoc.getRecipients());
+                            key = bruteforce(cdoc.getRecipients(), args.has(OPT_DEBUG));
                         }
                         Map<String, byte[]> decrypted = cdoc.getFiles(key);
                         for (Map.Entry<String, byte[]> e : decrypted.entrySet()) {
@@ -401,7 +407,7 @@ public class Tool {
         }
     }
 
-    static SecretKey bruteforce(Collection<Recipient> recipients) throws CardException {
+    static SecretKey bruteforce(Collection<Recipient> recipients, boolean debug) throws CardException {
         // If all recipients have a certificate, be smart with locating the right card
         boolean nocert = false;
         HashSet<X509Certificate> certs = new HashSet<>();
@@ -415,7 +421,7 @@ public class Tool {
 
         try {
             if (!nocert) {
-                try (EstEID eid = EstEID.locateOneOf(certs)) {
+                try (EstEID eid = EstEID.locateOneOf(certs, debug)) {
                     if (eid == null)
                         throw new CardNotPresentException("Did not find a card");
                     X509Certificate c = eid.getAuthCert();
@@ -441,7 +447,7 @@ public class Tool {
                     }
                 }
             } else {
-                try (EstEID eid = EstEID.anyCard()) {
+                try (EstEID eid = EstEID.anyCard(debug)) {
                     if (eid == null)
                         throw new CardNotPresentException("Did not find a card");
                     System.out.println("You are " + eid);
