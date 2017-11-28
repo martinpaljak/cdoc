@@ -41,9 +41,7 @@ import javax.smartcardio.CardException;
 import javax.smartcardio.CardNotPresentException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -66,6 +64,7 @@ public class Tool {
     private static final String OPT_VALIDATE = "validate";
     private static final String OPT_PRIVACY = "privacy";
     private static final String OPT_LIST = "list";
+
 
     private static OptionSet args = null;
 
@@ -114,9 +113,39 @@ public class Tool {
         try {
             // Test for unlimited crypto
             if (Cipher.getMaxAllowedKeyLength("AES") == 128) {
-                System.out.println("WARNING: Unlimited crypto policy is NOT installed!");
-                System.out.println("Please read: https://github.com/martinpaljak/cdoc/wiki/UnlimitedCrypto");
-                System.exit(2);
+                System.err.println("WARNING: Unlimited crypto policy is NOT installed!");
+                if (System.getProperty("java.vendor").contains("Oracle")) {
+                    String jv = System.getProperty("java.version");
+                    if (jv.startsWith("1.8")) {
+                        String[] jvb = jv.split("_");
+                        if (jvb.length == 2 && Integer.parseInt(jvb[1]) >= 151) {
+                            String jh = System.getProperty("java.home");
+                            System.err.println("Trying to fix automatically for " + jh + " ...");
+                            Path sf = Paths.get(jh, "lib", "security", "java.security");
+                            Path sftmp = Paths.get(jh, "lib", "security", "java.security.tmp");
+                            Path sfbak = Paths.get(jh, "lib", "security", "java.security.bak");
+                            try {
+                                List<String> lines = Files.readAllLines(sf);
+                                lines.add("crypto.policy=unlimited");
+                                Files.write(sftmp, lines);
+                                Files.copy(sf, sfbak, StandardCopyOption.REPLACE_EXISTING);
+                                Files.move(sftmp, sf, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                            } catch (AccessDeniedException e) {
+                                System.err.println("FAILED: Access denied.");
+                                System.err.println("Please run cdoc with sudo to automatically fix the problem by modifying:");
+                                System.err.println();
+                                System.err.println(sf);
+                                System.err.println();
+                                System.err.println("More information: https://github.com/martinpaljak/cdoc/wiki/UnlimitedCrypto");
+                                System.exit(2);
+                            }
+                        } else {
+                            System.err.println("Please upgrade to Java 8 Update 151 or later");
+                            System.err.println("More information: https://github.com/martinpaljak/cdoc/wiki/UnlimitedCrypto");
+                            System.exit(2);
+                        }
+                    }
+                }
             }
 
             if (args.has(OPT_VERBOSE)) {
