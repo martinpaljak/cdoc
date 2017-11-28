@@ -2,7 +2,7 @@
 
 Command line utility for working with encrypted CDOC files. Uses [cdoc4j](https://github.com/martinpaljak/cdoc4j) under the hood.
 
-**Requires [Java 1.8](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) with ["Unlimited Strength Jurisdiction Policy Files"](https://github.com/martinpaljak/cdoc/wiki/UnlimitedCrypto)!**
+**Requires [Java 1.8](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) or later with ["Unlimited Strength Jurisdiction Policy Files"](https://github.com/martinpaljak/cdoc/wiki/UnlimitedCrypto)**
 
 ## Usage
 Substitute `cdoc` with `java -jar cdoc.jar` on Unix and `cdoc.exe` on Windows.<br>Use `cdoc -help` to view all command line options.
@@ -49,7 +49,7 @@ Please note that the identity of receivers (certificates of those who are capabl
 
 When encrypting to CDOC 2.0, `-privacy` option can be used to disable online LDAP queries and to strip excessive metadata from the ZIP container (file creation times, certificates and names from the XML).
 
-NB! Please note that these privacy enhancements do not provide [cryptographic plausible denyability](https://en.wikipedia.org/wiki/Plausible_deniability) but just reduce the obvious metadata footprint.
+NB! Please note that these privacy enhancements do not provide [cryptographic plausible deniability](https://en.wikipedia.org/wiki/Plausible_deniability) but just reduce the obvious metadata footprint.
 
 ## Security and compatibility when encrypting for Estonian ID card
 Estonian ID cards have either 2048 bit RSA keys or 384 bit elliptic curve keys. On-card keys are used to protect the AES data encryption key, also known as transport key.
