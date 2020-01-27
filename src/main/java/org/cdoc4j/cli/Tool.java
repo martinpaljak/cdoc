@@ -106,7 +106,6 @@ public class Tool {
             System.exit(1);
         }
 
-
         try {
             // Test for unlimited crypto
             if (Cipher.getMaxAllowedKeyLength("AES") == 128) {
@@ -554,16 +553,14 @@ public class Tool {
      */
     static Set<X509Certificate> get_builtin_issuers() {
         Set<X509Certificate> s = new HashSet<>();
-        try {
-            CertificateFactory fact = CertificateFactory.getInstance("X.509");
-            try (InputStream i = Tool.class.getResourceAsStream("ESTEID-SK_2011.pem.crt")) {
+        String[] builtins = new String[]{"ESTEID-SK_2011.pem.crt", "ESTEID-SK_2015.pem.crt", "esteid2018.pem.crt"};
+        for (String c : builtins) {
+            try (InputStream i = Tool.class.getResourceAsStream(c)) {
+                CertificateFactory fact = CertificateFactory.getInstance("X.509");
                 s.add((X509Certificate) fact.generateCertificate(i));
+            } catch (GeneralSecurityException | IOException e) {
+                throw new RuntimeException("Could not load built-in issuers", e);
             }
-            try (InputStream i = Tool.class.getResourceAsStream("ESTEID-SK_2015.pem.crt")) {
-                s.add((X509Certificate) fact.generateCertificate(i));
-            }
-        } catch (GeneralSecurityException | IOException e) {
-            throw new RuntimeException("Could not load built-in issuers", e);
         }
         return s;
     }
@@ -585,9 +582,11 @@ public class Tool {
         ArrayList<X509Certificate> result = new ArrayList<>();
         for (X509Certificate c : certs) {
             String s = c.getSubjectX500Principal().toString();
-            if (s.contains("MOBIIL-ID"))
+            // Skip non-repudiation
+            if (c.getKeyUsage()[1])
                 continue;
-            if (!s.contains("authentication"))
+            // Skip Mobile ID
+            if (s.contains("MOBIIL-ID"))
                 continue;
             result.add(c);
         }
