@@ -1,4 +1,4 @@
-# cdoc · [![Build Status](https://travis-ci.org/martinpaljak/cdoc.svg?branch=master)](https://travis-ci.org/martinpaljak/cdoc) [![Coverity](https://scan.coverity.com/projects/14314/badge.svg?flat=1)](https://scan.coverity.com/projects/martinpaljak-cdoc) [![Latest release](https://img.shields.io/github/release/martinpaljak/cdoc/all.svg)](https://github.com/martinpaljak/cdoc/releases) [![GPL-3.0 licensed](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/martinpaljak/cdoc/blob/master/LICENSE)
+# cdoc · [![Build Status](https://github.com/martinpaljak/cdoc/workflows/Release%20CI/badge.svg)](https://github.com/martinpaljak/cdoc/actions) [![Latest release](https://img.shields.io/github/release/martinpaljak/cdoc/all.svg)](https://github.com/martinpaljak/cdoc/releases) [![GPL-3.0 licensed](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/martinpaljak/cdoc/blob/master/LICENSE)
 
 Command line utility for working with encrypted CDOC files. Uses [cdoc4j](https://github.com/martinpaljak/cdoc4j) under the hood.
 
