@@ -446,7 +446,7 @@ public class Tool {
 
         try {
             if (!nocert) {
-                try (EstEID eid = EstEID.locateOneOf(certs, debug)) {
+                try (EstEID eid = EstEID.locateOneOf(certs)) {
                     if (eid == null)
                         throw new CardNotPresentException("Did not find a card");
                     X509Certificate c = eid.getAuthCert();
@@ -472,7 +472,7 @@ public class Tool {
                     }
                 }
             } else {
-                try (EstEID eid = EstEID.anyCard(debug)) {
+                try (EstEID eid = EstEID.anyCard()) {
                     if (eid == null)
                         throw new CardNotPresentException("Did not find a card");
                     System.out.println("You are " + eid);
