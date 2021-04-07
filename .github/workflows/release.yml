@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-    - '*'
+    - 'v*'
 
 name: Release CI
 
@@ -16,6 +16,7 @@ jobs:
         uses: actions/setup-java@master
         with:
           java-version: 1.8
+          distribution: 'adopt'
       - name: Package
         run: mvn -B verify
       - name: Release
