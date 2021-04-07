@@ -28,6 +28,11 @@
             <artifactId>cdoc4j</artifactId>
             <version>20.03.30</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.martinpaljak</groupId>
+            <artifactId>apdu4j</artifactId>
+            <version>17.11.26</version>
+        </dependency>
         <!-- Card access for decryption -->
         <dependency>
             <groupId>com.github.martinpaljak</groupId>

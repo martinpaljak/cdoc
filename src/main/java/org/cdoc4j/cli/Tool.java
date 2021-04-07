@@ -27,8 +27,7 @@ import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.cdoc4j.*;
-import org.esteid.EstEID;
-import org.esteid.IDCode;
+import org.esteid.sk.IDCode;
 import org.esteid.sk.LDAP;
 
 import javax.crypto.Cipher;
@@ -298,8 +297,6 @@ public class Tool {
                                 throw new IllegalStateException("Unknown argument passed: " + args.valueOf(OPT_KEY));
                             }
                             verbose("Using key: " + HexUtils.bin2hex(key.getEncoded()));
-                        } else {
-                            key = bruteforce(cdoc.getRecipients(), args.has(OPT_DEBUG), cdoc.getAlgorithm());
                         }
                         Map<String, byte[]> decrypted = cdoc.getFiles(key);
                         for (Map.Entry<String, byte[]> e : decrypted.entrySet()) {
@@ -431,108 +428,108 @@ public class Tool {
             return new SecretKeySpec(HexUtils.stringToBin(v), "AES");
         }
     }
-
-    static SecretKey bruteforce(Collection<Recipient> recipients, boolean debug, EncryptionMethod em) throws CardException {
-        // If all recipients have a certificate, be smart with locating the right card
-        boolean nocert = false;
-        HashSet<X509Certificate> certs = new HashSet<>();
-        for (Recipient r : recipients) {
-            if (r.getCertificate() == null) {
-                nocert = true;
-            } else {
-                certs.add(r.getCertificate());
-            }
-        }
-
-        try {
-            if (!nocert) {
-                try (EstEID eid = EstEID.locateOneOf(certs)) {
-                    if (eid == null)
-                        throw new CardNotPresentException("Did not find a card");
-                    X509Certificate c = eid.getAuthCert();
-                    System.out.println("You are " + eid);
-                    Console console = System.console();
-                    char[] pinchars = console.readPassword("Enter PIN1: ");
-                    if (pinchars == null) {
-                        fail("PIN is null :(");
-                    }
-                    String pin = new String(pinchars);
-                    // Locate matching recipient
-                    for (Recipient r : recipients) {
-                        if (r.getCertificate().equals(c)) {
-                            if (r.getType() == Recipient.TYPE.RSA) {
-                                byte[] plaintext = eid.decrypt(r.getCryptogram(), pin);
-                                return new SecretKeySpec(plaintext, "AES");
-                            } else if (r.getType() == Recipient.TYPE.EC) {
-                                Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
-                                byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
-                                return Decrypt.getKey(secret, er, em);
-                            }
-                        }
-                    }
-                }
-            } else {
-                try (EstEID eid = EstEID.anyCard()) {
-                    if (eid == null)
-                        throw new CardNotPresentException("Did not find a card");
-                    System.out.println("You are " + eid);
-                    X509Certificate authcert = eid.getAuthCert();
-
-                    // Check if we have a possibility to successfully decrypt
-                    boolean canDecrypt = false;
-                    for (Recipient r : recipients) {
-                        if (r.getType() == Recipient.TYPE.RSA && authcert.getPublicKey().getAlgorithm().equals("RSA")) {
-                            canDecrypt = true;
-                            break;
-                        }
-                        if (r.getType() == Recipient.TYPE.EC && authcert.getPublicKey().getAlgorithm().equals("EC")) {
-                            canDecrypt = true;
-                            break;
-                        }
-                    }
-                    if (!canDecrypt) {
-                        fail("Can't decrypt: chosen card has " + authcert.getPublicKey().getAlgorithm() + " keys, but none of the recipients has the same");
-                    }
-
-                    Console console = System.console();
-                    char[] pinchars = console.readPassword("Enter PIN1: ");
-                    if (pinchars == null) {
-                        System.err.println("PIN is null :(");
-                        System.exit(1);
-                    }
-                    String pin = new String(pinchars);
-                    for (Recipient r : recipients) {
-                        // If recipient has a certificate, compare and fail early.
-                        if (r.getCertificate() != null) {
-                            if (!r.getCertificate().getPublicKey().equals(authcert.getPublicKey())) {
-                                continue;
-                            }
-                        }
-                        // Otherwise bruteforce
-                        try {
-                            if (r.getType() == Recipient.TYPE.RSA && authcert.getPublicKey().getAlgorithm().equals("RSA")) {
-                                byte[] plaintext = eid.decrypt(r.getCryptogram(), pin);
-                                return new SecretKeySpec(plaintext, "AES");
-                            } else if (r.getType() == Recipient.TYPE.EC && authcert.getPublicKey().getAlgorithm().equals("EC")) {
-                                Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
-                                byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
-                                return Decrypt.getKey(secret, er, em);
-                            } else {
-                                System.out.println("Algorithms do not match, trying next recipient ...");
-                            }
-                        } catch (InvalidKeyException e) {
-                            System.out.println("Did not decrypt, trying next recipient ...");
-                            continue;
-                        }
-                    }
-                    throw new IllegalStateException("Could not brute-decrypt key for any recipient");
-                }
-            }
-        } catch (CardException | EstEID.EstEIDException | GeneralSecurityException | EstEID.WrongPINException e) {
-            throw new CardException("Card communication error: " + e.getMessage());
-        }
-        throw new IllegalStateException("Could not decrypt a key for any recipient");
-    }
+//
+//    static SecretKey bruteforce(Collection<Recipient> recipients, boolean debug, EncryptionMethod em) throws CardException {
+//        // If all recipients have a certificate, be smart with locating the right card
+//        boolean nocert = false;
+//        HashSet<X509Certificate> certs = new HashSet<>();
+//        for (Recipient r : recipients) {
+//            if (r.getCertificate() == null) {
+//                nocert = true;
+//            } else {
+//                certs.add(r.getCertificate());
+//            }
+//        }
+//
+//        try {
+//            if (!nocert) {
+//                try (EstEID eid = EstEID.locateOneOf(certs)) {
+//                    if (eid == null)
+//                        throw new CardNotPresentException("Did not find a card");
+//                    X509Certificate c = eid.getAuthCert();
+//                    System.out.println("You are " + eid);
+//                    Console console = System.console();
+//                    char[] pinchars = console.readPassword("Enter PIN1: ");
+//                    if (pinchars == null) {
+//                        fail("PIN is null :(");
+//                    }
+//                    String pin = new String(pinchars);
+//                    // Locate matching recipient
+//                    for (Recipient r : recipients) {
+//                        if (r.getCertificate().equals(c)) {
+//                            if (r.getType() == Recipient.TYPE.RSA) {
+//                                byte[] plaintext = eid.decrypt(r.getCryptogram(), pin);
+//                                return new SecretKeySpec(plaintext, "AES");
+//                            } else if (r.getType() == Recipient.TYPE.EC) {
+//                                Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
+//                                byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
+//                                return Decrypt.getKey(secret, er, em);
+//                            }
+//                        }
+//                    }
+//                }
+//            } else {
+//                try (EstEID eid = EstEID.anyCard()) {
+//                    if (eid == null)
+//                        throw new CardNotPresentException("Did not find a card");
+//                    System.out.println("You are " + eid);
+//                    X509Certificate authcert = eid.getAuthCert();
+//
+//                    // Check if we have a possibility to successfully decrypt
+//                    boolean canDecrypt = false;
+//                    for (Recipient r : recipients) {
+//                        if (r.getType() == Recipient.TYPE.RSA && authcert.getPublicKey().getAlgorithm().equals("RSA")) {
+//                            canDecrypt = true;
+//                            break;
+//                        }
+//                        if (r.getType() == Recipient.TYPE.EC && authcert.getPublicKey().getAlgorithm().equals("EC")) {
+//                            canDecrypt = true;
+//                            break;
+//                        }
+//                    }
+//                    if (!canDecrypt) {
+//                        fail("Can't decrypt: chosen card has " + authcert.getPublicKey().getAlgorithm() + " keys, but none of the recipients has the same");
+//                    }
+//
+//                    Console console = System.console();
+//                    char[] pinchars = console.readPassword("Enter PIN1: ");
+//                    if (pinchars == null) {
+//                        System.err.println("PIN is null :(");
+//                        System.exit(1);
+//                    }
+//                    String pin = new String(pinchars);
+//                    for (Recipient r : recipients) {
+//                        // If recipient has a certificate, compare and fail early.
+//                        if (r.getCertificate() != null) {
+//                            if (!r.getCertificate().getPublicKey().equals(authcert.getPublicKey())) {
+//                                continue;
+//                            }
+//                        }
+//                        // Otherwise bruteforce
+//                        try {
+//                            if (r.getType() == Recipient.TYPE.RSA && authcert.getPublicKey().getAlgorithm().equals("RSA")) {
+//                                byte[] plaintext = eid.decrypt(r.getCryptogram(), pin);
+//                                return new SecretKeySpec(plaintext, "AES");
+//                            } else if (r.getType() == Recipient.TYPE.EC && authcert.getPublicKey().getAlgorithm().equals("EC")) {
+//                                Recipient.ECDHESRecipient er = (Recipient.ECDHESRecipient) r;
+//                                byte[] secret = eid.dh(er.getSenderPublicKey(), pin);
+//                                return Decrypt.getKey(secret, er, em);
+//                            } else {
+//                                System.out.println("Algorithms do not match, trying next recipient ...");
+//                            }
+//                        } catch (InvalidKeyException e) {
+//                            System.out.println("Did not decrypt, trying next recipient ...");
+//                            continue;
+//                        }
+//                    }
+//                    throw new IllegalStateException("Could not brute-decrypt key for any recipient");
+//                }
+//            }
+//        } catch (CardException | EstEID.EstEIDException | GeneralSecurityException | EstEID.WrongPINException e) {
+//            throw new CardException("Card communication error: " + e.getMessage());
+//        }
+//        throw new IllegalStateException("Could not decrypt a key for any recipient");
+//    }
 
     static String getVersion() {
         String version = "unknown-development";
