@@ -20,32 +20,8 @@ jobs:
       - name: Package
         run: mvn -B verify
       - name: Release
-        id: create_release
-        uses: actions/create-release@v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-      - name: Upload JAR
-        id: jar
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: target/cdoc.jar
-          asset_name: cdoc.jar
-          asset_content_type: application/zip
-      - name: Upload EXE
-        id: exe
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: target/cdoc.exe
-          asset_name: cdoc.exe
-          asset_content_type: application/x-msdownload
+          artifacts: "target/cdoc.*"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
