@@ -287,17 +287,15 @@ public class Tool {
                 for (Path p : files) {
                     try (CDOC cdoc = CDOC.open(p.toFile())) {
                         final SecretKey key;
-                        if (args.has(OPT_KEY)) {
-                            Key dwim = dwimKey((String) args.valueOf(OPT_KEY));
-                            if (dwim instanceof SecretKey) {
-                                key = (SecretKey) dwim;
-                            } else if (dwim instanceof PrivateKey) {
-                                key = Decrypt.getKey((PrivateKey) dwim, cdoc.getRecipients().get(0), cdoc.getAlgorithm()); // FIXME
-                            } else {
-                                throw new IllegalStateException("Unknown argument passed: " + args.valueOf(OPT_KEY));
-                            }
-                            verbose("Using key: " + HexUtils.bin2hex(key.getEncoded()));
+                        Key dwim = dwimKey((String) args.valueOf(OPT_KEY));
+                        if (dwim instanceof SecretKey) {
+                            key = (SecretKey) dwim;
+                        } else if (dwim instanceof PrivateKey) {
+                            key = Decrypt.getKey((PrivateKey) dwim, cdoc.getRecipients().get(0), cdoc.getAlgorithm()); // FIXME
+                        } else {
+                            throw new IllegalStateException("Unknown argument passed: " + args.valueOf(OPT_KEY));
                         }
+                        verbose("Using key: " + HexUtils.bin2hex(key.getEncoded()));
                         Map<String, byte[]> decrypted = cdoc.getFiles(key);
                         for (Map.Entry<String, byte[]> e : decrypted.entrySet()) {
                             File of = new File(output, e.getKey());
@@ -306,7 +304,7 @@ public class Tool {
                             verbose("Saving " + of);
                             Files.write(of.toPath(), e.getValue());
                         }
-                    } catch (CardNotPresentException e) {
+                    } catch (IOException e) {
                         // Do not fail if decryption is not possible
                         if (!args.has(OPT_LIST))
                             fail("Could not decrypt file: " + e.getMessage());
@@ -395,8 +393,6 @@ public class Tool {
                 System.out.println("Saved encrypted file to " + outfile);
                 System.exit(0);
             }
-        } catch (CardException e) {
-            fail("Card Error: " + e.getMessage());
         } catch (IOException e) {
             fail("I/O Error: " + e.getMessage());
         } catch (IllegalStateException e) {
