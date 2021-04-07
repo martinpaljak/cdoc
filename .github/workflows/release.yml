@@ -23,5 +23,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: "target/cdoc.*"
+          allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
