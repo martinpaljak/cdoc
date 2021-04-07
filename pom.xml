@@ -31,7 +31,7 @@
         <!-- Card access for decryption -->
         <dependency>
             <groupId>com.github.martinpaljak</groupId>
-            <artifactId>esteid</artifactId>
+            <artifactId>esteid-sk</artifactId>
             <version>20.06.04</version>
         </dependency>
     </dependencies>
