@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-    - 'v*'
+    - '*'
 
 name: Release CI
 
@@ -39,7 +39,7 @@ jobs:
           asset_name: cdoc.jar
           asset_content_type: application/zip
       - name: Upload EXE
-        id: jar
+        id: exe
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
