@@ -13,14 +13,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
       - name: Setup Java
-        uses: actions/setup-java@master
+        uses: actions/setup-java@v1
         with:
-          java-version: 1.8
+          java-version: 11
       - name: Package
-        run: mvn -B verify
+        run: ./mvnw -B verify
       - name: Release
         id: create_release
-        uses: actions/create-release@v1.0.0
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -30,7 +30,7 @@ jobs:
           prerelease: false
       - name: Upload JAR
         id: jar
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -39,8 +39,8 @@ jobs:
           asset_name: cdoc.jar
           asset_content_type: application/zip
       - name: Upload EXE
-        id: jar
-        uses: actions/upload-release-asset@v1.0.1
+        id: exe
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
