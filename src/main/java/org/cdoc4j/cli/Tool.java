@@ -16,7 +16,7 @@
  */
 package org.cdoc4j.cli;
 
-import apdu4j.HexUtils;
+import apdu4j.core.HexUtils;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -27,8 +27,7 @@ import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.cdoc4j.*;
-import org.esteid.EstEID;
-import org.esteid.IDCode;
+import org.esteid.sk.IDCode;
 import org.esteid.sk.LDAP;
 
 import javax.crypto.Cipher;
@@ -40,7 +39,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.PrivateKey;
 import java.security.cert.CertificateFactory;
@@ -433,7 +431,7 @@ public class Tool {
     }
 
     static SecretKey bruteforce(Collection<Recipient> recipients, boolean debug, EncryptionMethod em) throws CardException {
-        // If all recipients have a certificate, be smart with locating the right card
+ /*       // If all recipients have a certificate, be smart with locating the right card
         boolean nocert = false;
         HashSet<X509Certificate> certs = new HashSet<>();
         for (Recipient r : recipients) {
@@ -446,7 +444,7 @@ public class Tool {
 
         try {
             if (!nocert) {
-                try (EstEID eid = EstEID.locateOneOf(certs)) {
+                try (EstEID eid = null) {
                     if (eid == null)
                         throw new CardNotPresentException("Did not find a card");
                     X509Certificate c = eid.getAuthCert();
@@ -530,7 +528,7 @@ public class Tool {
             }
         } catch (CardException | EstEID.EstEIDException | GeneralSecurityException | EstEID.WrongPINException e) {
             throw new CardException("Card communication error: " + e.getMessage());
-        }
+        }*/
         throw new IllegalStateException("Could not decrypt a key for any recipient");
     }
 

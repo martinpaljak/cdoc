@@ -5,13 +5,21 @@
     <parent>
         <groupId>com.github.martinpaljak</groupId>
         <artifactId>metacard</artifactId>
-        <version>20.02.19</version>
+        <version>21.10.19</version>
     </parent>
     <artifactId>cdoc</artifactId>
     <packaging>jar</packaging>
     <!-- Never published, only via tags and Github releases -->
     <version>0.0.1-SNAPSHOT</version>
     <name>CDOC command line utility</name>
+    <repositories>
+        <!-- For picking up latest metacard -->
+        <repository>
+            <id>javacard-pro</id>
+            <name>javacard.pro</name>
+            <url>https://javacard.pro/maven/</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>net.sf.jopt-simple</groupId>
@@ -21,18 +29,24 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.64</version>
+            <version>1.70</version>
         </dependency>
         <dependency>
             <groupId>com.github.martinpaljak</groupId>
             <artifactId>cdoc4j</artifactId>
-            <version>20.03.30</version>
+            <version>21.12.31</version>
+        </dependency>
+        <!-- SK services (LDAP) -->
+        <dependency>
+            <groupId>com.github.martinpaljak</groupId>
+            <artifactId>esteid-sk</artifactId>
+            <version>21.12.31</version>
         </dependency>
         <!-- Card access for decryption -->
         <dependency>
             <groupId>com.github.martinpaljak</groupId>
             <artifactId>esteid</artifactId>
-            <version>17.11.26</version>
+            <version>21.12.31</version>
         </dependency>
     </dependencies>
     <build>
@@ -99,10 +113,12 @@
                                 <filter>
                                     <artifact>*:*</artifact>
                                     <excludes>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
                                         <exclude>META-INF/maven/**</exclude>
+                                        <exclude>**/module-info.class</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
@@ -128,10 +144,10 @@
             <plugin>
                 <groupId>com.akathist.maven.plugins.launch4j</groupId>
                 <artifactId>launch4j-maven-plugin</artifactId>
-                <version>1.7.25</version>
+                <version>2.0.1</version>
                 <executions>
                     <execution>
-                        <id>gp-exe</id>
+                        <id>cdoc-exe</id>
                         <phase>package</phase>
                         <goals>
                             <goal>launch4j</goal>
@@ -145,13 +161,13 @@
                                 <mainClass>org.cdoc4j.cli.Tool</mainClass>
                             </classPath>
                             <jre>
-                                <minVersion>1.8.0</minVersion>
+                                <minVersion>11</minVersion>
                             </jre>
                             <versionInfo>
                                 <fileVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}.${parsedVersion.buildNumber}</fileVersion>
                                 <txtFileVersion>${project.version}</txtFileVersion>
                                 <fileDescription>CDOC4J</fileDescription>
-                                <copyright>(C) 2015 - 2019 Martin Paljak and contributors (GPL+MIT)</copyright>
+                                <copyright>(C) 2015 - present Martin Paljak and contributors (GPL+MIT)</copyright>
                                 <productVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}.${parsedVersion.buildNumber}</productVersion>
                                 <txtProductVersion>${project.version}</txtProductVersion>
                                 <productName>CDOC4J</productName>
